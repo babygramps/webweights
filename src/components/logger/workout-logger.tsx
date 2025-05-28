@@ -19,7 +19,7 @@ import { SetLogger } from './set-logger';
 import { RestTimer } from './rest-timer';
 import { ExerciseSelector } from './exercise-selector';
 import { format } from 'date-fns';
-import { SetsList } from './index';
+import { SetsList } from './SetsList';
 
 interface Workout {
   id: string;
