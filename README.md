@@ -160,6 +160,41 @@ pnpm db:studio    # Open Drizzle Studio
 - [ ] Social features
 - [ ] PWA support
 
+### Phase 5: Stats Dashboard & Analytics ✅
+
+- [x] Stats Dashboard Page (`/stats`)
+  - Recent workouts list with volume metrics
+  - Personal records (PRs) display cards
+  - Volume and intensity trends over time
+  - Muscle group distribution charts
+  - Workout completion/adherence rates
+- [x] Chart Components (using Recharts)
+  - Reusable `ProgressChart` for line/bar charts
+  - `MuscleGroupChart` for pie/donut visualizations
+  - `PRCard` for displaying personal records
+  - `StatsCard` for key metrics
+- [x] Database Queries
+  - Efficient aggregation queries for stats
+  - Personal records calculation
+  - Volume and muscle group analytics
+  - Workout completion tracking
+- [x] Robust Logging
+  - Comprehensive logging throughout stats queries
+  - Error handling with detailed logs
+
+### Phase 6: Polishing & UX Enhancements (Next)
+
+- [ ] Mobile polish: Test all flows on mobile, improve touch targets
+- [ ] Accessibility: Keyboard navigation, ARIA labels, color contrast
+- [ ] Performance: Optimize queries, lazy-load components
+- [ ] Notifications: Toasts for PRs, workout completion
+
+### Phase 7: Social & Sharing (Future)
+
+- [ ] Share progress: Export charts/images
+- [ ] Friends/leaderboards: Compare stats
+- [ ] Templates: Save/share mesocycles
+
 ## 📄 Database Schema
 
 The app uses the following main tables:
