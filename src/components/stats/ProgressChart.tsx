@@ -21,6 +21,7 @@ import {
   TooltipProps,
 } from 'recharts';
 import { format } from 'date-fns';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface ProgressChartData {
   date: string;
@@ -86,6 +87,8 @@ export function ProgressChart({
   },
   tooltipFormat = 'default',
 }: ProgressChartProps) {
+  const { weightUnit, convertWeight } = useUserPreferences();
+
   console.log(
     `[ProgressChart] Rendering ${chartType} chart for ${title} with ${data.length} data points`,
   );
@@ -95,10 +98,29 @@ export function ProgressChart({
 
   const formatTooltip = (value: number): string => {
     if (tooltipFormat === 'kilo') {
-      return `${(value / 1000).toFixed(1)}k lbs`;
+      const convertedValue = convertWeight(value);
+      return `${(convertedValue / 1000).toFixed(1)}k ${weightUnit}`;
     }
     return String(value);
   };
+
+  // Convert data if it includes weight values
+  const convertedData =
+    tooltipFormat === 'kilo'
+      ? data.map((item) => ({
+          ...item,
+          [dataKey]:
+            typeof item[dataKey] === 'number'
+              ? convertWeight(item[dataKey] as number)
+              : item[dataKey],
+        }))
+      : data;
+
+  // Update y-axis label with unit
+  const updatedYAxisLabel =
+    yAxisLabel?.includes('Volume') || yAxisLabel?.includes('lbs')
+      ? `Volume (${weightUnit})`
+      : yAxisLabel;
 
   return (
     <Card>
@@ -108,7 +130,10 @@ export function ProgressChart({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
-          <Chart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+          <Chart
+            data={convertedData}
+            margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey={xAxisKey}
@@ -117,7 +142,7 @@ export function ProgressChart({
             />
             <YAxis
               label={{
-                value: yAxisLabel,
+                value: updatedYAxisLabel,
                 angle: -90,
                 position: 'insideLeft',
                 className: 'text-xs',

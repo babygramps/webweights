@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, TrendingUp, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface PRCardProps {
   exerciseName: string;
@@ -17,8 +18,10 @@ export function PRCard({
   date,
   isNew = false,
 }: PRCardProps) {
+  const { weightUnit, convertWeight } = useUserPreferences();
+
   console.log(
-    `[PRCard] Rendering PR for ${exerciseName}: ${weight}lbs x ${reps} reps`,
+    `[PRCard] Rendering PR for ${exerciseName}: ${convertWeight(weight)}${weightUnit} x ${reps} reps`,
   );
 
   const formattedDate =
@@ -39,7 +42,9 @@ export function PRCard({
       <CardContent>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold">{weight} lbs</span>
+            <span className="text-2xl font-bold">
+              {convertWeight(weight)} {weightUnit}
+            </span>
             <span className="text-lg text-muted-foreground">x {reps}</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">

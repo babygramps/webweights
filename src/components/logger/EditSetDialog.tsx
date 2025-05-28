@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { MinusCircle, PlusCircle, Dumbbell, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface UpdatedSet {
   id: string;
@@ -51,7 +52,8 @@ export function EditSetDialog({
   set,
   onSave,
 }: EditSetDialogProps) {
-  const [weight, setWeight] = useState(set.weight.toString());
+  const { weightUnit, convertWeight } = useUserPreferences();
+  const [weight, setWeight] = useState(convertWeight(set.weight).toString());
   const [reps, setReps] = useState(set.reps.toString());
   const [rir, setRir] = useState(set.rir?.toString() || '');
   const [rpe, setRpe] = useState(set.rpe?.toString() || '');
@@ -71,9 +73,12 @@ export function EditSetDialog({
       return;
     }
 
+    // Convert from user's unit to kg for storage
+    const weightInKg = weightUnit === 'lbs' ? weightNum / 2.20462 : weightNum;
+
     const updatedSet: UpdatedSet = {
       id: set.id,
-      weight: weightNum,
+      weight: weightInKg,
       reps: repsNum,
       rir: rir ? parseInt(rir) : null,
       rpe: rpe ? parseInt(rpe) : null,
@@ -119,7 +124,7 @@ export function EditSetDialog({
           {/* Weight and Reps */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="weight">Weight (lbs)</Label>
+              <Label htmlFor="weight">Weight ({weightUnit})</Label>
               <Input
                 id="weight"
                 type="number"

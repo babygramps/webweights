@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2, Zap, Dumbbell } from 'lucide-react';
 import { EditSetDialog } from './EditSetDialog';
 import { toast } from 'sonner';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface LoggedSet {
   id: string;
@@ -49,6 +50,7 @@ export function SetsList({
   onUpdateSet,
   onDeleteSet,
 }: SetsListProps) {
+  const { weightUnit, convertWeight } = useUserPreferences();
   const [editingSet, setEditingSet] = useState<LoggedSet | null>(null);
   const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
 
@@ -144,12 +146,17 @@ export function SetsList({
                         Set {set.setNumber}
                       </span>
                       <span className="font-semibold">
-                        {set.weight} lbs × {set.reps} reps
+                        {convertWeight(set.weight)} {weightUnit} × {set.reps}{' '}
+                        reps
                       </span>
-                      {(set.rir !== undefined || set.rpe !== undefined) && (
+                      {(typeof set.rir === 'number' ||
+                        typeof set.rpe === 'number') && (
                         <span className="text-sm text-muted-foreground">
-                          {set.rir !== undefined && `${set.rir} RIR`}
-                          {set.rpe !== undefined && `${set.rpe} RPE`}
+                          {typeof set.rir === 'number'
+                            ? `${set.rir} RIR`
+                            : typeof set.rpe === 'number'
+                              ? `${set.rpe} RPE`
+                              : ''}
                         </span>
                       )}
                     </div>
