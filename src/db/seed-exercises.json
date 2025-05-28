@@ -1,0 +1,282 @@
+[
+  {
+    "name": "Barbell Bench Press",
+    "type": "barbell",
+    "primary_muscle": "chest",
+    "tags": ["compound", "push", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Barbell Back Squat",
+    "type": "barbell",
+    "primary_muscle": "quads",
+    "tags": ["compound", "legs", "squat"],
+    "is_public": true
+  },
+  {
+    "name": "Conventional Deadlift",
+    "type": "barbell",
+    "primary_muscle": "glutes",
+    "tags": ["compound", "pull", "hip-hinge"],
+    "is_public": true
+  },
+  {
+    "name": "Barbell Row",
+    "type": "barbell",
+    "primary_muscle": "back",
+    "tags": ["compound", "pull", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Overhead Press",
+    "type": "barbell",
+    "primary_muscle": "shoulders",
+    "tags": ["compound", "push", "vertical"],
+    "is_public": true
+  },
+  {
+    "name": "Romanian Deadlift",
+    "type": "barbell",
+    "primary_muscle": "hamstrings",
+    "tags": ["compound", "pull", "hip-hinge"],
+    "is_public": true
+  },
+  {
+    "name": "Front Squat",
+    "type": "barbell",
+    "primary_muscle": "quads",
+    "tags": ["compound", "legs", "squat"],
+    "is_public": true
+  },
+  {
+    "name": "Incline Barbell Press",
+    "type": "barbell",
+    "primary_muscle": "chest",
+    "tags": ["compound", "push", "incline"],
+    "is_public": true
+  },
+  {
+    "name": "Barbell Curl",
+    "type": "barbell",
+    "primary_muscle": "biceps",
+    "tags": ["isolation", "pull", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "Close-Grip Bench Press",
+    "type": "barbell",
+    "primary_muscle": "triceps",
+    "tags": ["compound", "push", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "Dumbbell Bench Press",
+    "type": "dumbbell",
+    "primary_muscle": "chest",
+    "tags": ["compound", "push", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Dumbbell Row",
+    "type": "dumbbell",
+    "primary_muscle": "back",
+    "tags": ["compound", "pull", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Dumbbell Shoulder Press",
+    "type": "dumbbell",
+    "primary_muscle": "shoulders",
+    "tags": ["compound", "push", "vertical"],
+    "is_public": true
+  },
+  {
+    "name": "Bulgarian Split Squat",
+    "type": "dumbbell",
+    "primary_muscle": "quads",
+    "tags": ["unilateral", "legs", "squat"],
+    "is_public": true
+  },
+  {
+    "name": "Dumbbell Lateral Raise",
+    "type": "dumbbell",
+    "primary_muscle": "shoulders",
+    "tags": ["isolation", "shoulders", "lateral"],
+    "is_public": true
+  },
+  {
+    "name": "Dumbbell Flyes",
+    "type": "dumbbell",
+    "primary_muscle": "chest",
+    "tags": ["isolation", "push", "chest"],
+    "is_public": true
+  },
+  {
+    "name": "Hammer Curl",
+    "type": "dumbbell",
+    "primary_muscle": "biceps",
+    "tags": ["isolation", "pull", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "Lat Pulldown",
+    "type": "machine",
+    "primary_muscle": "back",
+    "tags": ["compound", "pull", "vertical"],
+    "is_public": true
+  },
+  {
+    "name": "Cable Row",
+    "type": "machine",
+    "primary_muscle": "back",
+    "tags": ["compound", "pull", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Leg Press",
+    "type": "machine",
+    "primary_muscle": "quads",
+    "tags": ["compound", "legs", "press"],
+    "is_public": true
+  },
+  {
+    "name": "Leg Curl",
+    "type": "machine",
+    "primary_muscle": "hamstrings",
+    "tags": ["isolation", "legs", "hamstrings"],
+    "is_public": true
+  },
+  {
+    "name": "Leg Extension",
+    "type": "machine",
+    "primary_muscle": "quads",
+    "tags": ["isolation", "legs", "quads"],
+    "is_public": true
+  },
+  {
+    "name": "Cable Chest Fly",
+    "type": "machine",
+    "primary_muscle": "chest",
+    "tags": ["isolation", "push", "chest"],
+    "is_public": true
+  },
+  {
+    "name": "Cable Lateral Raise",
+    "type": "machine",
+    "primary_muscle": "shoulders",
+    "tags": ["isolation", "shoulders", "lateral"],
+    "is_public": true
+  },
+  {
+    "name": "Cable Tricep Pushdown",
+    "type": "machine",
+    "primary_muscle": "triceps",
+    "tags": ["isolation", "push", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "Cable Bicep Curl",
+    "type": "machine",
+    "primary_muscle": "biceps",
+    "tags": ["isolation", "pull", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "Pull-Up",
+    "type": "bodyweight",
+    "primary_muscle": "back",
+    "tags": ["compound", "pull", "vertical"],
+    "is_public": true
+  },
+  {
+    "name": "Push-Up",
+    "type": "bodyweight",
+    "primary_muscle": "chest",
+    "tags": ["compound", "push", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Dips",
+    "type": "bodyweight",
+    "primary_muscle": "chest",
+    "tags": ["compound", "push", "vertical"],
+    "is_public": true
+  },
+  {
+    "name": "Walking Lunge",
+    "type": "bodyweight",
+    "primary_muscle": "quads",
+    "tags": ["unilateral", "legs", "functional"],
+    "is_public": true
+  },
+  {
+    "name": "Calf Raise",
+    "type": "barbell",
+    "primary_muscle": "calves",
+    "tags": ["isolation", "legs", "calves"],
+    "is_public": true
+  },
+  {
+    "name": "Face Pull",
+    "type": "machine",
+    "primary_muscle": "shoulders",
+    "tags": ["isolation", "pull", "rear-delts"],
+    "is_public": true
+  },
+  {
+    "name": "Hip Thrust",
+    "type": "barbell",
+    "primary_muscle": "glutes",
+    "tags": ["compound", "glutes", "hip-hinge"],
+    "is_public": true
+  },
+  {
+    "name": "Preacher Curl",
+    "type": "barbell",
+    "primary_muscle": "biceps",
+    "tags": ["isolation", "pull", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "Skull Crusher",
+    "type": "barbell",
+    "primary_muscle": "triceps",
+    "tags": ["isolation", "push", "arms"],
+    "is_public": true
+  },
+  {
+    "name": "T-Bar Row",
+    "type": "barbell",
+    "primary_muscle": "back",
+    "tags": ["compound", "pull", "horizontal"],
+    "is_public": true
+  },
+  {
+    "name": "Hack Squat",
+    "type": "machine",
+    "primary_muscle": "quads",
+    "tags": ["compound", "legs", "squat"],
+    "is_public": true
+  },
+  {
+    "name": "Good Morning",
+    "type": "barbell",
+    "primary_muscle": "hamstrings",
+    "tags": ["compound", "hip-hinge", "posterior-chain"],
+    "is_public": true
+  },
+  {
+    "name": "Upright Row",
+    "type": "barbell",
+    "primary_muscle": "shoulders",
+    "tags": ["compound", "pull", "shoulders"],
+    "is_public": true
+  },
+  {
+    "name": "Shrugs",
+    "type": "barbell",
+    "primary_muscle": "traps",
+    "tags": ["isolation", "pull", "traps"],
+    "is_public": true
+  }
+]

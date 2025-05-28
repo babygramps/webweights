@@ -1,4 +1,4 @@
-// import { createClient } from '@/lib/supabase/server';
+import { ActiveMesocycle } from '@/components/dashboard/active-mesocycle';
 import {
   Card,
   CardContent,
@@ -54,53 +54,63 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Week</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Week {stats.currentWeek}</div>
-            <p className="text-xs text-muted-foreground">of your mesocycle</p>
-          </CardContent>
-        </Card>
+      {/* Active Mesocycle */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2">
+          <ActiveMesocycle />
+        </div>
+        <div className="space-y-4">
+          {/* Quick Stats */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Current Week
+              </CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">Week {stats.currentWeek}</div>
+              <p className="text-xs text-muted-foreground">of your mesocycle</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Workouts
-            </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
-            <p className="text-xs text-muted-foreground">this mesocycle</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Workouts
+              </CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
+              <p className="text-xs text-muted-foreground">this mesocycle</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Workout</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.nextWorkout}</div>
-            <p className="text-xs text-muted-foreground">scheduled today</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Next Workout
+              </CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.nextWorkout}</div>
+              <p className="text-xs text-muted-foreground">scheduled today</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New PRs</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.personalRecords}</div>
-            <p className="text-xs text-muted-foreground">this week</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">New PRs</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.personalRecords}</div>
+              <p className="text-xs text-muted-foreground">this week</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Recent Workouts */}
@@ -141,21 +151,7 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>No Active Mesocycle</CardTitle>
-            <CardDescription>
-              Start by creating your first training program
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/builder">
-              <Button className="w-full">Create Mesocycle</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
         <Card>
           <CardHeader>
             <CardTitle>Exercise Catalogue</CardTitle>
@@ -167,6 +163,34 @@ export default async function DashboardPage() {
             <Link href="/catalogue">
               <Button variant="outline" className="w-full">
                 Browse Exercises
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Progress Stats</CardTitle>
+            <CardDescription>View your training analytics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/stats">
+              <Button variant="outline" className="w-full">
+                View Statistics
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Training History</CardTitle>
+            <CardDescription>Review past workouts and PRs</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/logger">
+              <Button variant="outline" className="w-full">
+                Workout Log
               </Button>
             </Link>
           </CardContent>
