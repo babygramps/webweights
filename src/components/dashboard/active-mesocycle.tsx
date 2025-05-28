@@ -8,10 +8,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Calendar, Dumbbell, Plus, ArrowRight } from 'lucide-react';
+import { Calendar, Dumbbell, Plus, ArrowRight, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import {
   format,
@@ -196,6 +197,13 @@ export function ActiveMesocycle() {
             </div>
           </div>
         </CardContent>
+        <CardFooter>
+          <Link href={`/mesocycles/${mesocycle.id}/edit`} className="w-full">
+            <Button variant="outline" className="w-full">
+              <Pencil className="mr-2 h-4 w-4" /> Edit Mesocycle
+            </Button>
+          </Link>
+        </CardFooter>
       </Card>
 
       {upcomingWorkouts.length > 0 && (
