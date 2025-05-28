@@ -440,7 +440,21 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
                     onDeleteSet={handleDeleteSet}
                   />
                   <SetLogger
-                    previousSets={[]}
+                    previousSets={loggedSets
+                      .filter(
+                        (s) => s.exercise_id === selectedExercise.exercise_id,
+                      )
+                      .map((s) => ({
+                        set_number: s.set_number,
+                        weight: s.weight,
+                        reps: s.reps,
+                        rir: s.rir,
+                        rpe: s.rpe,
+                        is_myo_rep: s.is_myo_rep,
+                        is_partial: s.is_partial,
+                        myo_rep_count: s.myo_rep_count,
+                        partial_count: s.partial_count,
+                      }))}
                     defaults={selectedExercise.defaults}
                     onLogSet={async (setData) =>
                       await handleLogSet(selectedExercise.exercise_id, setData)
