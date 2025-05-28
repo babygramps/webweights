@@ -21,6 +21,14 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",
     "@tanstack/react-query": "^5.77.2",
     "class-variance-authority": "^0.7.1",
@@ -28,12 +36,16 @@
     "drizzle-orm": "^0.43.1",
     "lucide-react": "^0.511.0",
     "next": "15.3.2",
+    "next-themes": "^0.4.6",
     "postgres": "^3.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.56.4",
     "react-timer-hook": "^4.0.5",
     "recharts": "^2.15.3",
+    "sonner": "^2.0.3",
     "tailwind-merge": "^3.3.0",
+    "zod": "^3.25.32",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
