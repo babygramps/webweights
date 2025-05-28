@@ -11,7 +11,7 @@ export default function HomePage() {
             <div className="flex items-center justify-center space-x-2">
               <Dumbbell className="h-12 w-12 text-primary" />
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                WeightTracker
+                LiftTracker
               </h1>
             </div>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
