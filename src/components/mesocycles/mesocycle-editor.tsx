@@ -154,6 +154,7 @@ export function MesocycleEditor({ mesocycleId }: { mesocycleId: string }) {
       mesocycle_id: string;
       scheduled_for: string;
       label: string;
+      week_number: number;
     }> = [];
     const exercises: Array<{
       id: string;
@@ -198,6 +199,7 @@ export function MesocycleEditor({ mesocycleId }: { mesocycleId: string }) {
               mesocycle_id: mesocycleId,
               scheduled_for: format(workoutDate, 'yyyy-MM-dd'),
               label: `${template.label} - Week ${week + 1}`,
+              week_number: week + 1,
             });
 
             // Create workout exercises

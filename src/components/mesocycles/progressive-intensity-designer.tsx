@@ -100,15 +100,24 @@ export function ProgressiveIntensityDesigner({
   const createAndEmitProgressionRef = React.useRef(createAndEmitProgression);
   createAndEmitProgressionRef.current = createAndEmitProgression;
 
-  // Emit initial progression data on mount
+  // Store the latest weeklyProgressions in a ref for initial emission
+  const weeklyProgressionsRef = React.useRef(weeklyProgressions);
+  weeklyProgressionsRef.current = weeklyProgressions;
+
+  // Emit initial progression data on mount (after render is complete)
   React.useEffect(() => {
     if (!hasEmittedInitial.current) {
-      createAndEmitProgressionRef.current(weeklyProgressions);
-      hasEmittedInitial.current = true;
-    }
-  }, [weeklyProgressions]);
+      // Use setTimeout to defer until after render is complete
+      const timeoutId = setTimeout(() => {
+        createAndEmitProgressionRef.current(weeklyProgressionsRef.current);
+        hasEmittedInitial.current = true;
+      }, 0);
 
-  // Handle progression type changes
+      return () => clearTimeout(timeoutId);
+    }
+  }, []); // Empty deps to only run on mount
+
+  // Handle progression type changes (only after initial emission)
   React.useEffect(() => {
     if (hasEmittedInitial.current) {
       createAndEmitProgressionRef.current(weeklyProgressions);

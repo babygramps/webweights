@@ -16,6 +16,7 @@ import { Calendar, Dumbbell, Plus, ArrowRight, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { format, differenceInDays, startOfDay } from 'date-fns';
 import { parseLocalDate } from '@/lib/utils/date';
+import { Badge } from '@/components/ui/badge';
 
 interface Mesocycle {
   id: string;
@@ -23,12 +24,19 @@ interface Mesocycle {
   start_date: string;
   weeks: number;
   workouts?: Workout[];
+  mesocycle_progressions?: Array<{
+    id: string;
+    progression_type: string;
+    weekly_progressions: unknown[];
+  }>;
 }
 
 interface Workout {
   id: string;
   scheduled_for: string;
   label: string;
+  week_number?: number;
+  intensity_modifier?: object;
   completed?: boolean;
 }
 
@@ -64,7 +72,9 @@ export function ActiveMesocycle() {
           workouts (
             id,
             scheduled_for,
-            label
+            label,
+            week_number,
+            intensity_modifier
           )
         `,
         )
@@ -74,15 +84,50 @@ export function ActiveMesocycle() {
         .single();
 
       if (error) {
-        console.error('Error fetching mesocycle:', error);
         if (error.code === 'PGRST116') {
-          // No mesocycles found
+          // No mesocycles found - this is expected for new users
+          console.log('No mesocycles found for user');
           setMesocycle(null);
+          return;
         } else {
+          console.error('Error fetching mesocycle:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            error,
+          });
           throw error;
         }
       } else {
         console.log('Fetched mesocycle:', mesocycles);
+
+        // Try to fetch progression data separately if mesocycle exists
+        if (mesocycles?.id) {
+          try {
+            const { data: progressions, error: progressionError } =
+              await supabase
+                .from('mesocycle_progressions')
+                .select('id, progression_type, weekly_progressions')
+                .eq('mesocycle_id', mesocycles.id);
+
+            if (!progressionError && progressions) {
+              mesocycles.mesocycle_progressions = progressions;
+              console.log('Fetched progressions:', progressions);
+            } else if (progressionError) {
+              console.log(
+                'No progressions found or table does not exist:',
+                progressionError,
+              );
+            }
+          } catch (progressionErr) {
+            console.log(
+              'Progression fetch failed (this is optional):',
+              progressionErr,
+            );
+          }
+        }
+
         setMesocycle(mesocycles);
 
         // Get upcoming workouts (next 7 days)
@@ -115,8 +160,14 @@ export function ActiveMesocycle() {
           setUpcomingWorkouts(upcoming);
         }
       }
-    } catch (err) {
-      console.error('Failed to fetch mesocycle:', err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Failed to fetch mesocycle:', {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack,
+        err,
+      });
     } finally {
       setLoading(false);
     }
@@ -208,6 +259,18 @@ export function ActiveMesocycle() {
               <span>{format(endDate, 'MMM d, yyyy')}</span>
             </div>
           </div>
+          {mesocycle.mesocycle_progressions?.[0] && (
+            <div className="pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Progression Type
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {mesocycle.mesocycle_progressions[0].progression_type}
+                </Badge>
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Link href={`/mesocycles/${mesocycle.id}/edit`} className="w-full">
@@ -235,9 +298,16 @@ export function ActiveMesocycle() {
                   </div>
                   <div>
                     <p className="font-medium">{workout.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {getWorkoutDateLabel(workout.scheduled_for)}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {getWorkoutDateLabel(workout.scheduled_for)}
+                      </p>
+                      {workout.week_number && (
+                        <Badge variant="secondary" className="text-xs">
+                          Week {workout.week_number}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <Link href={`/logger/${workout.id}`}>

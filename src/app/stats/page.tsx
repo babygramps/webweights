@@ -18,15 +18,7 @@ import { ExerciseStats } from '@/components/stats/ExerciseStats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
 import { format } from 'date-fns';
-
-type RecentWorkout = {
-  workoutId: string;
-  workoutDate: string;
-  workoutLabel: string | null;
-  mesocycleTitle: string;
-  setCount: number;
-  totalVolume: number;
-};
+import { Badge } from '@/components/ui/badge';
 
 type PersonalRecord = {
   exerciseId: string;
@@ -82,14 +74,16 @@ export default async function StatsPage() {
   // Calculate some additional stats
   const totalWorkouts = recentWorkouts.length;
   const totalVolume = recentWorkouts.reduce(
-    (sum: number, w: RecentWorkout) => sum + (Number(w.totalVolume) || 0),
+    (sum: number, w: (typeof recentWorkouts)[0]) =>
+      sum + (Number(w.totalVolume) || 0),
     0,
   );
   const avgSetsPerWorkout =
     totalWorkouts > 0
       ? Math.round(
           recentWorkouts.reduce(
-            (sum: number, w: RecentWorkout) => sum + (Number(w.setCount) || 0),
+            (sum: number, w: (typeof recentWorkouts)[0]) =>
+              sum + (Number(w.setCount) || 0),
             0,
           ) / totalWorkouts,
         )
@@ -191,17 +185,24 @@ export default async function StatsPage() {
           <div>
             <h2 className="text-2xl font-bold mb-4">Recent Workouts</h2>
             <div className="space-y-3">
-              {recentWorkouts.map((workout: RecentWorkout) => (
+              {recentWorkouts.map((workout: (typeof recentWorkouts)[0]) => (
                 <div
                   key={workout.workoutId}
                   className="p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold">
-                        {workout.workoutLabel || 'Workout'} -{' '}
-                        {workout.mesocycleTitle}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">
+                          {workout.workoutLabel || 'Workout'} -{' '}
+                          {workout.mesocycleTitle}
+                        </h3>
+                        {workout.weekNumber && (
+                          <Badge variant="secondary" className="text-xs">
+                            Week {workout.weekNumber}
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {format(
                           new Date(workout.workoutDate),

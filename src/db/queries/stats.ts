@@ -15,6 +15,8 @@ export async function getRecentWorkouts(userId: string, limit = 10) {
         workoutId: workouts.id,
         workoutDate: workouts.scheduledFor,
         workoutLabel: workouts.label,
+        weekNumber: workouts.weekNumber,
+        intensityModifier: workouts.intensityModifier,
         mesocycleTitle: mesocycles.title,
         setCount: sql<number>`count(${setsLogged.id})`,
         totalVolume: sql<number>`sum(${setsLogged.weight} * ${setsLogged.reps})`,
@@ -27,6 +29,8 @@ export async function getRecentWorkouts(userId: string, limit = 10) {
         workouts.id,
         workouts.scheduledFor,
         workouts.label,
+        workouts.weekNumber,
+        workouts.intensityModifier,
         mesocycles.title,
       )
       .orderBy(desc(workouts.scheduledFor))
