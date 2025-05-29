@@ -8,6 +8,7 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { parseLocalDate } from '@/lib/utils/date';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
@@ -79,7 +80,7 @@ export function MesocycleEditor({ mesocycleId }: { mesocycleId: string }) {
       form.reset({
         title: data.title,
         weeks: data.weeks,
-        startDate: new Date(data.start_date),
+        startDate: parseLocalDate(data.start_date),
       });
       setLoading(false);
     };

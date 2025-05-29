@@ -19,6 +19,7 @@ import { SetLogger } from './set-logger';
 import { RestTimer } from './rest-timer';
 import { ExerciseSelector } from './exercise-selector';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils/date';
 
 interface Workout {
   id: string;
@@ -268,7 +269,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         <div className="text-center flex-1">
           <h1 className="text-xl font-bold">{workout.label}</h1>
           <p className="text-sm text-muted-foreground">
-            {format(new Date(workout.scheduled_for), 'EEEE, MMM d')}
+            {format(parseLocalDate(workout.scheduled_for), 'EEEE, MMM d')}
           </p>
         </div>
         <Button

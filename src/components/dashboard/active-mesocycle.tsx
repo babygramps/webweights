@@ -14,13 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Calendar, Dumbbell, Plus, ArrowRight, Pencil } from 'lucide-react';
 import Link from 'next/link';
-import {
-  format,
-  differenceInDays,
-  isToday,
-  isTomorrow,
-  isPast,
-} from 'date-fns';
+import { format, differenceInDays, startOfDay } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils/date';
 
 interface Mesocycle {
   id: string;
@@ -92,18 +87,31 @@ export function ActiveMesocycle() {
 
         // Get upcoming workouts (next 7 days)
         if (mesocycles?.workouts) {
+          const today = startOfDay(new Date());
+          console.log(
+            '[ActiveMesocycle] Current local date:',
+            format(today, 'yyyy-MM-dd EEEE'),
+          );
+
           const upcoming = mesocycles.workouts
             .filter((workout: Workout) => {
-              const workoutDate = new Date(workout.scheduled_for);
-              return !isPast(workoutDate) || isToday(workoutDate);
+              const workoutDate = parseLocalDate(workout.scheduled_for);
+              const workoutDay = startOfDay(workoutDate);
+              console.log(
+                `[ActiveMesocycle] Workout "${workout.label}" scheduled for:`,
+                format(workoutDay, 'yyyy-MM-dd EEEE'),
+              );
+              // Include today's workout and future workouts
+              return workoutDay >= today;
             })
             .sort(
               (a: Workout, b: Workout) =>
-                new Date(a.scheduled_for).getTime() -
-                new Date(b.scheduled_for).getTime(),
+                parseLocalDate(a.scheduled_for).getTime() -
+                parseLocalDate(b.scheduled_for).getTime(),
             )
             .slice(0, 3);
 
+          console.log('[ActiveMesocycle] Upcoming workouts:', upcoming);
           setUpcomingWorkouts(upcoming);
         }
       }
@@ -149,7 +157,7 @@ export function ActiveMesocycle() {
     );
   }
 
-  const startDate = new Date(mesocycle.start_date);
+  const startDate = parseLocalDate(mesocycle.start_date);
   const endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + mesocycle.weeks * 7);
 
@@ -162,9 +170,13 @@ export function ActiveMesocycle() {
   const currentWeek = Math.floor(daysElapsed / 7) + 1;
 
   const getWorkoutDateLabel = (dateStr: string) => {
-    const date = new Date(dateStr);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
+    const date = parseLocalDate(dateStr);
+    const today = startOfDay(new Date());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.getTime() === today.getTime()) return 'Today';
+    if (date.getTime() === tomorrow.getTime()) return 'Tomorrow';
     return format(date, 'EEEE, MMM d');
   };
 
