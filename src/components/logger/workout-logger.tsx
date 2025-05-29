@@ -180,11 +180,14 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   };
 
-  const handleAddExercise = async (exerciseId: string) => {
+  const handleAddExercise = async (
+    exerciseId: string,
+    exerciseName?: string,
+  ) => {
     if (!workout) return;
 
     try {
-      console.log('Adding exercise to workout:', exerciseId);
+      console.log('Adding exercise to workout:', exerciseId, exerciseName);
       const supabase = createClient();
 
       // Get the next order index
