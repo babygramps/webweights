@@ -15,6 +15,7 @@ import {
   Legend,
   Tooltip,
 } from 'recharts';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface MuscleGroupData {
   primaryMuscle: string;
@@ -47,6 +48,8 @@ const CustomTooltip = ({
   active,
   payload,
 }: import('recharts').TooltipProps<string, string>) => {
+  const { weightUnit, convertWeight } = useUserPreferences();
+
   if (active && payload && payload.length) {
     const entry = payload[0] as unknown as {
       name: string;
@@ -57,7 +60,9 @@ const CustomTooltip = ({
       <div className="bg-background border rounded-lg shadow-lg p-3">
         <p className="text-sm font-medium">{entry.name}</p>
         <p className="text-sm text-primary">
-          {entry.value} {entry.name === 'setCount' ? 'sets' : 'lbs'}
+          {entry.name === 'setCount' || entry.payload.name === 'setCount'
+            ? `${entry.value} sets`
+            : `${convertWeight(entry.value).toFixed(0)} ${weightUnit}`}
         </p>
         <p className="text-xs text-muted-foreground">
           {entry.payload.percentage}%
@@ -78,6 +83,8 @@ export function MuscleGroupChart({
   description = 'Training volume by muscle group',
   dataKey = 'setCount',
 }: MuscleGroupChartProps) {
+  const { convertWeight } = useUserPreferences();
+
   console.log(
     `[MuscleGroupChart] Rendering chart with ${data.length} muscle groups`,
   );
@@ -87,7 +94,8 @@ export function MuscleGroupChart({
   const chartData: MuscleGroupData[] = data.map((item) => ({
     ...item,
     name: item.primaryMuscle || 'Other',
-    value: item[dataKey],
+    value:
+      dataKey === 'totalVolume' ? convertWeight(item[dataKey]) : item[dataKey],
     percentage: ((item[dataKey] / total) * 100).toFixed(1),
   }));
 

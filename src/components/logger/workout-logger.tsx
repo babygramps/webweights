@@ -19,6 +19,7 @@ import { SetLogger } from './set-logger';
 import { RestTimer } from './rest-timer';
 import { ExerciseSelector } from './exercise-selector';
 import { format } from 'date-fns';
+import { SetsList } from './SetsList';
 
 interface Workout {
   id: string;
@@ -60,6 +61,8 @@ interface LoggedSet {
   rest?: string;
   is_myo_rep?: boolean;
   is_partial?: boolean;
+  myo_rep_count?: number;
+  partial_count?: number;
 }
 
 export function WorkoutLogger({ workoutId }: { workoutId: string }) {
@@ -75,6 +78,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
   useEffect(() => {
     fetchWorkout();
     fetchLoggedSets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workoutId]);
 
   const fetchWorkout = async () => {
@@ -233,6 +237,77 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   };
 
+  const handleUpdateSet = async (
+    setId: string,
+    updates: {
+      weight?: number;
+      reps?: number;
+      rir?: number | null;
+      rpe?: number | null;
+      isMyoRep?: boolean;
+      isPartial?: boolean;
+      myoRepCount?: number;
+      partialCount?: number;
+    },
+  ) => {
+    console.log(`Updating set ${setId} with:`, updates);
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('sets_logged')
+        .update({
+          weight: updates.weight?.toString(),
+          reps: updates.reps,
+          rir: updates.rir,
+          rpe: updates.rpe,
+          is_myo_rep: updates.isMyoRep,
+          is_partial: updates.isPartial,
+          myo_rep_count: updates.myoRepCount,
+          partial_count: updates.partialCount,
+        })
+        .eq('id', setId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating set:', error);
+        throw error;
+      }
+
+      console.log('Set updated successfully:', data);
+      // Refresh the sets
+      await fetchLoggedSets();
+    } catch (error) {
+      console.error('Failed to update set:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteSet = async (setId: string) => {
+    console.log(`Deleting set ${setId}`);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('sets_logged')
+        .delete()
+        .eq('id', setId);
+
+      if (error) {
+        console.error('Error deleting set:', error);
+        throw error;
+      }
+
+      console.log('Set deleted successfully');
+      // Refresh the sets
+      await fetchLoggedSets();
+    } catch (error) {
+      console.error('Failed to delete set:', error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -336,10 +411,50 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <SetsList
+                    sets={loggedSets
+                      .filter(
+                        (s) => s.exercise_id === selectedExercise.exercise_id,
+                      )
+                      .map((s) => ({
+                        id: s.id ?? '',
+                        exerciseId: s.exercise_id,
+                        exerciseName: selectedExercise.exercise.name,
+                        setNumber: s.set_number,
+                        weight: s.weight,
+                        reps: s.reps,
+                        rir: s.rir,
+                        rpe: s.rpe,
+                        isMyoRep: s.is_myo_rep,
+                        isPartial: s.is_partial,
+                        myoRepCount:
+                          (s as LoggedSet & { myo_rep_count?: number })
+                            .myo_rep_count ?? 0,
+                        partialCount:
+                          (s as LoggedSet & { partial_count?: number })
+                            .partial_count ?? 0,
+                      }))}
+                    onSetUpdated={fetchLoggedSets}
+                    onSetDeleted={fetchLoggedSets}
+                    onUpdateSet={handleUpdateSet}
+                    onDeleteSet={handleDeleteSet}
+                  />
                   <SetLogger
-                    previousSets={loggedSets.filter(
-                      (s) => s.exercise_id === selectedExercise.exercise_id,
-                    )}
+                    previousSets={loggedSets
+                      .filter(
+                        (s) => s.exercise_id === selectedExercise.exercise_id,
+                      )
+                      .map((s) => ({
+                        set_number: s.set_number,
+                        weight: s.weight,
+                        reps: s.reps,
+                        rir: s.rir,
+                        rpe: s.rpe,
+                        is_myo_rep: s.is_myo_rep,
+                        is_partial: s.is_partial,
+                        myo_rep_count: s.myo_rep_count,
+                        partial_count: s.partial_count,
+                      }))}
                     defaults={selectedExercise.defaults}
                     onLogSet={async (setData) =>
                       await handleLogSet(selectedExercise.exercise_id, setData)
