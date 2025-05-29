@@ -270,3 +270,32 @@ export async function getExerciseProgress(
     throw error;
   }
 }
+
+// Get all exercises available to a user (public + custom)
+export async function getUserExercises(userId: string) {
+  console.log(`[stats] Fetching exercises for user: ${userId}`);
+
+  try {
+    // Get all exercises that the user has logged
+    const userExercises = await db
+      .selectDistinct({
+        id: exercises.id,
+        name: exercises.name,
+        type: exercises.type,
+        primaryMuscle: exercises.primaryMuscle,
+        isPublic: exercises.isPublic,
+      })
+      .from(setsLogged)
+      .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(eq(mesocycles.userId, userId))
+      .orderBy(exercises.name);
+
+    console.log(`[stats] Found ${userExercises.length} exercises used by user`);
+    return userExercises;
+  } catch (error) {
+    console.error('[stats] Error fetching user exercises:', error);
+    throw error;
+  }
+}

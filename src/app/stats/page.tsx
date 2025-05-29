@@ -6,12 +6,15 @@ import {
   getVolumeProgressData,
   getMuscleGroupDistribution,
   getWorkoutCompletionRate,
+  getUserExercises,
 } from '@/db/queries/stats';
+import { fetchExerciseProgress } from './actions';
 import { StatsCard } from '@/components/stats/StatsCard';
 import { PRCard } from '@/components/stats/PRCard';
 import { ProgressChart } from '@/components/stats/ProgressChart';
 import { MuscleGroupChart } from '@/components/stats/MuscleGroupChart';
 import { OneRMCalculator } from '@/components/stats/OneRMCalculator';
+import { ExerciseStats } from '@/components/stats/ExerciseStats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
 import { format } from 'date-fns';
@@ -66,12 +69,14 @@ export default async function StatsPage() {
     volumeData,
     muscleDistribution,
     completionRate,
+    userExercises,
   ] = await Promise.all([
     getRecentWorkouts(user.id, 5),
     getPersonalRecords(user.id),
     getVolumeProgressData(user.id),
     getMuscleGroupDistribution(user.id),
     getWorkoutCompletionRate(user.id),
+    getUserExercises(user.id),
   ]);
 
   // Calculate some additional stats
@@ -130,8 +135,9 @@ export default async function StatsPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="exercises">Exercises</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
         </TabsList>
@@ -216,6 +222,18 @@ export default async function StatsPage() {
               ))}
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="exercises" className="space-y-6">
+          <ExerciseStats
+            exercises={userExercises.map((ex) => ({
+              id: ex.id,
+              name: ex.name,
+              type: ex.type || 'Unknown',
+              primaryMuscle: ex.primaryMuscle || 'Unknown',
+            }))}
+            onExerciseSelect={fetchExerciseProgress}
+          />
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-6">
