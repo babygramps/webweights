@@ -44,6 +44,8 @@ import {
   WorkoutTemplateDesigner,
   WorkoutTemplate,
 } from '@/components/mesocycles/workout-template-designer';
+import { ProgressiveIntensityDesigner } from '@/components/mesocycles/progressive-intensity-designer';
+import { MesocycleProgression } from '@/types/progression';
 
 const mesocycleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
@@ -63,6 +65,11 @@ const STEPS = [
     title: 'Workout Schedule',
     description: 'Design your workouts',
   },
+  {
+    id: 'intensity',
+    title: 'Progressive Intensity',
+    description: 'Plan intensity progression',
+  },
   { id: 'review', title: 'Review', description: 'Confirm your mesocycle' },
 ];
 
@@ -71,6 +78,9 @@ export function MesocycleWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(
     [],
+  );
+  const [progression, setProgression] = useState<MesocycleProgression | null>(
+    null,
   );
   const [saving, setSaving] = useState(false);
 
@@ -114,6 +124,8 @@ export function MesocycleWizard() {
       mesocycle_id: string;
       scheduled_for: string;
       label: string;
+      week_number: number;
+      intensity_modifier?: object;
     }> = [];
     const exercises: Array<{
       id: string;
@@ -141,6 +153,12 @@ export function MesocycleWizard() {
     // For each week in the mesocycle
     for (let week = 0; week < weeks; week++) {
       const weekStart = addWeeks(firstWeekStart, week);
+      const weekNumber = week + 1;
+
+      // Get intensity modifier for this week
+      const weekProgression = progression?.weeklyProgressions?.find(
+        (p) => p.week === weekNumber,
+      );
 
       // For each workout template
       templates.forEach((template) => {
@@ -152,12 +170,14 @@ export function MesocycleWizard() {
           if (workoutDate >= startDate) {
             const workoutId = crypto.randomUUID();
 
-            // Create workout
+            // Create workout with intensity modifier
             workouts.push({
               id: workoutId,
               mesocycle_id: mesocycleId,
               scheduled_for: format(workoutDate, 'yyyy-MM-dd'),
-              label: `${template.label} - Week ${week + 1}`,
+              label: `${template.label} - Week ${weekNumber}`,
+              week_number: weekNumber,
+              intensity_modifier: weekProgression?.intensity,
             });
 
             // Create workout exercises
@@ -173,8 +193,9 @@ export function MesocycleWizard() {
 
             console.log('[MesocycleWizard] Generated workout:', {
               date: format(workoutDate, 'yyyy-MM-dd EEEE'),
-              label: `${template.label} - Week ${week + 1}`,
+              label: `${template.label} - Week ${weekNumber}`,
               exerciseCount: template.exercises.length,
+              intensity: weekProgression?.intensity,
             });
           }
         });
@@ -189,6 +210,7 @@ export function MesocycleWizard() {
       setSaving(true);
       console.log('[MesocycleWizard] Submitting mesocycle:', data);
       console.log('[MesocycleWizard] Workout templates:', workoutTemplates);
+      console.log('[MesocycleWizard] Progression:', progression);
 
       const supabase = createClient();
       const {
@@ -220,6 +242,31 @@ export function MesocycleWizard() {
       }
 
       console.log('[MesocycleWizard] Created mesocycle:', mesocycle);
+
+      // Save progression if configured
+      if (progression) {
+        const progressionData = {
+          mesocycle_id: mesocycle.id,
+          progression_type: progression.progressionType,
+          baseline_week: progression.baselineWeek,
+          weekly_progressions: progression.weeklyProgressions,
+          global_settings: progression.globalSettings,
+        };
+
+        const { error: progressionError } = await supabase
+          .from('mesocycle_progressions')
+          .insert(progressionData);
+
+        if (progressionError) {
+          console.error(
+            '[MesocycleWizard] Error saving progression:',
+            progressionError,
+          );
+          // Don't throw here - progression is optional
+        } else {
+          console.log('[MesocycleWizard] Saved progression data');
+        }
+      }
 
       // Generate and create workouts
       if (workoutTemplates.length > 0) {
@@ -372,11 +419,26 @@ export function MesocycleWizard() {
           />
         );
 
-      case 2:
-        const formData = form.getValues();
-        const endDate = addWeeks(formData.startDate, formData.weeks);
+      case 2: {
+        const currentFormData = form.getValues();
+        return (
+          <ProgressiveIntensityDesigner
+            mesocycleWeeks={currentFormData.weeks}
+            initialProgression={progression || undefined}
+            onProgressionChange={setProgression}
+          />
+        );
+      }
+
+      case 3: {
+        const reviewFormData = form.getValues();
+        const endDate = addWeeks(
+          reviewFormData.startDate,
+          reviewFormData.weeks,
+        );
         const totalWorkouts = workoutTemplates.reduce(
-          (sum, template) => sum + template.dayOfWeek.length * formData.weeks,
+          (sum, template) =>
+            sum + template.dayOfWeek.length * reviewFormData.weeks,
           0,
         );
 
@@ -389,12 +451,12 @@ export function MesocycleWizard() {
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Title</p>
-                  <p className="font-medium">{formData.title}</p>
+                  <p className="font-medium">{reviewFormData.title}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Duration</p>
-                    <p className="font-medium">{formData.weeks} weeks</p>
+                    <p className="font-medium">{reviewFormData.weeks} weeks</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
@@ -407,7 +469,7 @@ export function MesocycleWizard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Start Date</p>
                     <p className="font-medium">
-                      {format(formData.startDate, 'PPP')}
+                      {format(reviewFormData.startDate, 'PPP')}
                     </p>
                   </div>
                   <div>
@@ -453,8 +515,47 @@ export function MesocycleWizard() {
                 )}
               </CardContent>
             </Card>
+
+            {progression && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Intensity Progression</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Type</p>
+                        <p className="font-medium capitalize">
+                          {progression.progressionType}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Deload Weeks</p>
+                        <p className="font-medium">
+                          {
+                            progression.weeklyProgressions.filter(
+                              (w) => w.isDeload,
+                            ).length
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Auto Deload</p>
+                        <p className="font-medium">
+                          {progression.globalSettings.autoDeload
+                            ? 'Enabled'
+                            : 'Disabled'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
+      }
 
       default:
         return null;
@@ -469,7 +570,7 @@ export function MesocycleWizard() {
           value={((currentStep + 1) / STEPS.length) * 100}
           className="mb-4"
         />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {STEPS.map((step, index) => (
             <div
               key={step.id}
@@ -480,14 +581,14 @@ export function MesocycleWizard() {
                 index > currentStep && 'text-muted-foreground',
               )}
             >
-              <p className="font-medium">{step.title}</p>
-              <p className="text-sm">{step.description}</p>
+              <div className="text-sm font-medium">{step.title}</div>
+              <div className="text-xs">{step.description}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Step Content */}
+      {/* Content */}
       <Card>
         <CardHeader>
           <CardTitle>{STEPS[currentStep].title}</CardTitle>
@@ -499,19 +600,25 @@ export function MesocycleWizard() {
             variant="outline"
             onClick={prevStep}
             disabled={currentStep === 0}
+            className="flex items-center gap-2"
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          {currentStep < STEPS.length - 1 ? (
-            <Button onClick={nextStep}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+
+          {currentStep === STEPS.length - 1 ? (
+            <Button
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={saving}
+              className="flex items-center gap-2"
+            >
+              {saving ? 'Creating...' : 'Create Mesocycle'}
+              <Check className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={form.handleSubmit(onSubmit)} disabled={saving}>
-              {saving ? 'Creating...' : 'Create Mesocycle'}
-              {!saving && <Check className="h-4 w-4 ml-1" />}
+            <Button onClick={nextStep} className="flex items-center gap-2">
+              Next
+              <ChevronRight className="h-4 w-4" />
             </Button>
           )}
         </CardFooter>
