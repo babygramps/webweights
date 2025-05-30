@@ -12,6 +12,11 @@ import {
 } from '@/components/ui/select';
 import { Search, Filter, Grid, List, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  EQUIPMENT_TYPES,
+  MUSCLE_GROUPS,
+  COMMON_TAGS,
+} from '@/constants/exercises';
 
 interface FilterBarProps {
   onSearchChange: (search: string) => void;
@@ -27,28 +32,9 @@ interface FilterBarProps {
   };
 }
 
-const equipmentTypes = ['barbell', 'dumbbell', 'machine', 'bodyweight'];
-const muscleGroups = [
-  'chest',
-  'back',
-  'shoulders',
-  'biceps',
-  'triceps',
-  'quads',
-  'hamstrings',
-  'glutes',
-  'calves',
-  'traps',
-];
-const commonTags = [
-  'compound',
-  'isolation',
-  'push',
-  'pull',
-  'legs',
-  'arms',
-  'unilateral',
-];
+const equipmentTypes = EQUIPMENT_TYPES;
+const muscleGroups = MUSCLE_GROUPS;
+const commonTags = COMMON_TAGS;
 
 export function FilterBar({
   onSearchChange,
