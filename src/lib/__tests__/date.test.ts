@@ -11,7 +11,7 @@ describe('date utilities', () => {
   it('parses YYYY-MM-DD as local date', () => {
     const date = parseLocalDate('2024-05-10');
     expect(date.getFullYear()).toBe(2024);
-    expect(date.getMonth()).toBe(4);
+    expect(date.getMonth()).toBe(4); // Month is zero-based
     expect(date.getDate()).toBe(10);
   });
 
