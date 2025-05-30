@@ -183,6 +183,7 @@ export function ExerciseSelector({
                       });
                     } else {
                       onSelect([ex.id], [ex.name]);
+                      onClose();
                     }
                   }}
                 >
@@ -213,6 +214,8 @@ export function ExerciseSelector({
                     .filter((ex) => ids.includes(ex.id))
                     .map((ex) => ex.name);
                   onSelect(ids, names);
+                  setSelected(new Set());
+                  onClose();
                 }}
                 disabled={selected.size === 0}
               >
