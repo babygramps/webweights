@@ -1,4 +1,4 @@
-import { MesocycleEditor } from '@/components/mesocycles/mesocycle-editor';
+import { MesocycleEditWizard } from '@/components/mesocycles/mesocycle-edit-wizard';
 
 export default function EditMesocyclePage({
   params,
@@ -10,7 +10,7 @@ export default function EditMesocyclePage({
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Edit Mesocycle</h1>
       </div>
-      <MesocycleEditor mesocycleId={params.mesocycleId} />
+      <MesocycleEditWizard mesocycleId={params.mesocycleId} />
     </div>
   );
 }
