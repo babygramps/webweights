@@ -7,6 +7,7 @@ export interface Database {
           id: string;
           user_id: string;
           weight_unit: 'kg' | 'lbs';
+          theme: 'light' | 'dark';
           created_at: string;
           updated_at: string;
         };
@@ -14,6 +15,7 @@ export interface Database {
           id?: string;
           user_id: string;
           weight_unit?: 'kg' | 'lbs';
+          theme?: 'light' | 'dark';
           created_at?: string;
           updated_at?: string;
         };
@@ -21,6 +23,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           weight_unit?: 'kg' | 'lbs';
+          theme?: 'light' | 'dark';
           created_at?: string;
           updated_at?: string;
         };
