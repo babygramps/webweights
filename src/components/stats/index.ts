@@ -5,3 +5,4 @@ export { MuscleGroupChart } from './MuscleGroupChart';
 export { StatsFilters } from './StatsFilters';
 export { ExerciseProgressChart } from './ExerciseProgressChart';
 export { OneRMCalculator } from './OneRMCalculator';
+export { ExerciseStats } from './ExerciseStats';

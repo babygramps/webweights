@@ -15,6 +15,8 @@ export async function getRecentWorkouts(userId: string, limit = 10) {
         workoutId: workouts.id,
         workoutDate: workouts.scheduledFor,
         workoutLabel: workouts.label,
+        weekNumber: workouts.weekNumber,
+        intensityModifier: workouts.intensityModifier,
         mesocycleTitle: mesocycles.title,
         setCount: sql<number>`count(${setsLogged.id})`,
         totalVolume: sql<number>`sum(${setsLogged.weight} * ${setsLogged.reps})`,
@@ -27,6 +29,8 @@ export async function getRecentWorkouts(userId: string, limit = 10) {
         workouts.id,
         workouts.scheduledFor,
         workouts.label,
+        workouts.weekNumber,
+        workouts.intensityModifier,
         mesocycles.title,
       )
       .orderBy(desc(workouts.scheduledFor))
@@ -267,6 +271,35 @@ export async function getExerciseProgress(
     return progress;
   } catch (error) {
     console.error('[stats] Error fetching exercise progress:', error);
+    throw error;
+  }
+}
+
+// Get all exercises available to a user (public + custom)
+export async function getUserExercises(userId: string) {
+  console.log(`[stats] Fetching exercises for user: ${userId}`);
+
+  try {
+    // Get all exercises that the user has logged
+    const userExercises = await db
+      .selectDistinct({
+        id: exercises.id,
+        name: exercises.name,
+        type: exercises.type,
+        primaryMuscle: exercises.primaryMuscle,
+        isPublic: exercises.isPublic,
+      })
+      .from(setsLogged)
+      .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(eq(mesocycles.userId, userId))
+      .orderBy(exercises.name);
+
+    console.log(`[stats] Found ${userExercises.length} exercises used by user`);
+    return userExercises;
+  } catch (error) {
+    console.error('[stats] Error fetching user exercises:', error);
     throw error;
   }
 }

@@ -15,7 +15,7 @@ interface Exercise {
 }
 
 interface ExerciseSelectorProps {
-  onSelect: (exerciseId: string) => void;
+  onSelect: (exerciseId: string, exerciseName?: string) => void;
   onClose: () => void;
 }
 
@@ -81,7 +81,7 @@ export function ExerciseSelector({ onSelect, onClose }: ExerciseSelectorProps) {
                   key={ex.id}
                   variant="ghost"
                   className="w-full flex justify-between items-center py-3 px-2"
-                  onClick={() => onSelect(ex.id)}
+                  onClick={() => onSelect(ex.id, ex.name)}
                 >
                   <span className="font-medium">{ex.name}</span>
                   <span className="text-xs text-muted-foreground capitalize">

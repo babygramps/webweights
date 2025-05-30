@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -19,13 +19,16 @@ import { SetLogger } from './set-logger';
 import { RestTimer } from './rest-timer';
 import { ExerciseSelector } from './exercise-selector';
 import { format } from 'date-fns';
-import { SetsList } from './SetsList';
+import { parseLocalDate } from '@/lib/utils/date';
+
 
 interface Workout {
   id: string;
   scheduled_for: string;
   label: string;
   mesocycle_id: string;
+  week_number?: number;
+  intensity_modifier?: object;
   workout_exercises?: WorkoutExercise[];
 }
 
@@ -75,13 +78,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchWorkout();
-    fetchLoggedSets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workoutId]);
-
-  const fetchWorkout = async () => {
+  const fetchWorkout = useCallback(async () => {
     try {
       console.log('Fetching workout:', workoutId);
       const supabase = createClient();
@@ -122,9 +119,9 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workoutId]);
 
-  const fetchLoggedSets = async () => {
+  const fetchLoggedSets = useCallback(async () => {
     try {
       console.log('Fetching logged sets for workout:', workoutId);
       const supabase = createClient();
@@ -145,7 +142,12 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     } catch (err) {
       console.error('Failed to fetch logged sets:', err);
     }
-  };
+  }, [workoutId]);
+
+  useEffect(() => {
+    fetchWorkout();
+    fetchLoggedSets();
+  }, [fetchWorkout, fetchLoggedSets]);
 
   const handleLogSet = async (
     exerciseId: string,
@@ -183,11 +185,14 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   };
 
-  const handleAddExercise = async (exerciseId: string) => {
+  const handleAddExercise = async (
+    exerciseId: string,
+    exerciseName?: string,
+  ) => {
     if (!workout) return;
 
     try {
-      console.log('Adding exercise to workout:', exerciseId);
+      console.log('Adding exercise to workout:', exerciseId, exerciseName);
       const supabase = createClient();
 
       // Get the next order index
@@ -332,30 +337,44 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/dashboard')}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="text-center flex-1">
-          <h1 className="text-xl font-bold">{workout.label}</h1>
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(workout.scheduled_for), 'EEEE, MMM d')}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">{workout.label}</h1>
+          <p className="text-muted-foreground">
+            {format(
+              parseLocalDate(workout.scheduled_for),
+              'EEEE, MMMM d, yyyy',
+            )}
           </p>
-        </div>
-        <Button
-          onClick={handleFinishWorkout}
-          disabled={isSaving || loggedSets.length === 0}
-        >
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Check className="h-4 w-4" />
+          {workout.week_number && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="secondary">Week {workout.week_number}</Badge>
+              {workout.intensity_modifier && (
+                <Badge variant="outline" className="text-xs">
+                  Intensity Programmed
+                </Badge>
+              )}
+            </div>
           )}
-        </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/logger')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            onClick={handleFinishWorkout}
+            disabled={isSaving}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="mr-2 h-4 w-4" />
+            )}
+            Finish Workout
+          </Button>
+        </div>
       </div>
 
       {/* Rest Timer */}
