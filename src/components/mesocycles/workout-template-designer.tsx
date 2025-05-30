@@ -148,6 +148,15 @@ export function WorkoutTemplateDesigner({
     setShowExerciseSelector(null);
   };
 
+  const addExercisesToTemplate = (
+    templateId: string,
+    exercisesToAdd: Array<{ id: string; name: string }>,
+  ) => {
+    exercisesToAdd.forEach((ex) => {
+      addExerciseToTemplate(templateId, ex.id, ex.name);
+    });
+  };
+
   const updateExercise = (
     templateId: string,
     exerciseIndex: number,
