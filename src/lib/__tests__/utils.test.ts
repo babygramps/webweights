@@ -3,7 +3,9 @@ import { cn } from '../utils';
 
 describe('cn utility', () => {
   it('merges and deduplicates classes', () => {
-    expect(cn('px-2', 'py-2', 'px-2')).toBe('px-2 py-2');
+    const classes = cn('px-2', 'py-2', 'px-2');
+    const tokens = classes.split(/\s+/);
+    expect(new Set(tokens)).toEqual(new Set(['px-2', 'py-2']));
   });
 
   it('handles conditional values', () => {

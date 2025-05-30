@@ -5,12 +5,13 @@ import {
   isLocalToday,
   isLocalTomorrow,
 } from '../utils/date';
+import { startOfDay } from 'date-fns';
 
 describe('date utilities', () => {
   it('parses YYYY-MM-DD as local date', () => {
     const date = parseLocalDate('2024-05-10');
     expect(date.getFullYear()).toBe(2024);
-    expect(date.getMonth()).toBe(4);
+    expect(date.getMonth()).toBe(4); // Month is zero-based
     expect(date.getDate()).toBe(10);
   });
 
@@ -26,8 +27,8 @@ describe('date utilities', () => {
   });
 
   it('checks today and tomorrow correctly', () => {
-    const today = new Date();
-    const tomorrow = new Date();
+    const today = startOfDay(new Date());
+    const tomorrow = startOfDay(new Date());
     tomorrow.setDate(today.getDate() + 1);
 
     expect(isLocalToday(today)).toBe(true);
