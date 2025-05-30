@@ -1,0 +1,83 @@
+'use server';
+
+import { createClient } from '@/lib/supabase/server';
+import { format } from 'date-fns';
+import { getWorkoutsInRange } from '@/db/queries/workouts';
+import { startOfWeek, endOfWeek } from 'date-fns';
+import { redirect } from 'next/navigation';
+
+export async function getWorkoutsForCurrentWeek() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const end = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+  return getWorkoutsInRange(user.id, start, end);
+}
+
+export async function createFreestyleWorkout() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  // Check if a freestyle mesocycle exists
+  const { data: existing, error: fetchError } = await supabase
+    .from('mesocycles')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('title', 'Freestyle')
+    .single();
+
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    throw fetchError;
+  }
+
+  let mesocycleId = existing?.id;
+
+  if (!mesocycleId) {
+    const { data: newMesocycle, error: createError } = await supabase
+      .from('mesocycles')
+      .insert({
+        user_id: user.id,
+        title: 'Freestyle',
+        weeks: 1,
+        start_date: format(new Date(), 'yyyy-MM-dd'),
+      })
+      .select('id')
+      .single();
+
+    if (createError) {
+      throw createError;
+    }
+
+    mesocycleId = newMesocycle.id;
+  }
+
+  const { data: workout, error: workoutError } = await supabase
+    .from('workouts')
+    .insert({
+      mesocycle_id: mesocycleId,
+      label: 'Freestyle Workout',
+      scheduled_for: format(new Date(), 'yyyy-MM-dd'),
+    })
+    .select('id')
+    .single();
+
+  if (workoutError) {
+    throw workoutError;
+  }
+
+  redirect(`/logger/${workout.id}`);
+}
