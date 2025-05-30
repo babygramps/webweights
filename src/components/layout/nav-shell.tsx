@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UnitToggle } from '@/components/ui/unit-toggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface NavItem {
   href: string;
@@ -112,6 +113,7 @@ export function NavShell({ children, user }: NavShellProps) {
 
         <div className="flex items-center space-x-2">
           <UnitToggle />
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
@@ -190,6 +192,10 @@ export function NavShell({ children, user }: NavShellProps) {
               <div className="flex items-center justify-between px-2">
                 <span className="text-sm">Weight Unit</span>
                 <UnitToggle />
+              </div>
+              <div className="flex items-center justify-between px-2">
+                <span className="text-sm">Theme</span>
+                <ThemeToggle />
               </div>
               <Button
                 variant="outline"
