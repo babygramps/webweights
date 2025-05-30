@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, Check, RotateCcw } from 'lucide-react';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface LoggedSet {
   set_number: number;
@@ -17,6 +18,8 @@ interface LoggedSet {
   rpe?: number;
   is_myo_rep?: boolean;
   is_partial?: boolean;
+  myo_rep_count?: number;
+  partial_count?: number;
 }
 
 interface SetLoggerProps {
@@ -35,11 +38,14 @@ export function SetLogger({
   defaults,
   onLogSet,
 }: SetLoggerProps) {
+  const { weightUnit, convertWeight } = useUserPreferences();
   const [weight, setWeight] = useState<string>('');
   const [reps, setReps] = useState<string>('');
   const [rir, setRir] = useState<number | undefined>(defaults?.rir);
   const [isMyoRep, setIsMyoRep] = useState(false);
+  const [myoRepCount, setMyoRepCount] = useState(0);
   const [isPartial, setIsPartial] = useState(false);
+  const [partialCount, setPartialCount] = useState(0);
   const [intensityType, setIntensityType] = useState<'rir' | 'rpe'>('rir');
 
   // Get the last set's data for quick re-use
@@ -54,12 +60,17 @@ export function SetLogger({
       return;
     }
 
+    // Convert from user's unit to kg for storage
+    const weightInKg = weightUnit === 'lbs' ? weightNum / 2.20462 : weightNum;
+
     const newSet: LoggedSet = {
       set_number: currentSetNumber,
-      weight: weightNum,
+      weight: weightInKg,
       reps: repsNum,
       is_myo_rep: isMyoRep,
       is_partial: isPartial,
+      ...(isMyoRep ? { myo_rep_count: myoRepCount } : {}),
+      ...(isPartial ? { partial_count: partialCount } : {}),
     };
 
     if (intensityType === 'rir' && rir !== undefined) {
@@ -74,7 +85,9 @@ export function SetLogger({
     // Reset form but keep weight for next set
     setReps('');
     setIsMyoRep(false);
+    setMyoRepCount(0);
     setIsPartial(false);
+    setPartialCount(0);
   };
 
   const handleQuickWeight = (adjustment: number) => {
@@ -88,7 +101,7 @@ export function SetLogger({
 
   const handleRepeatLastSet = () => {
     if (lastSet) {
-      setWeight(lastSet.weight.toString());
+      setWeight(convertWeight(lastSet.weight).toString());
       setReps(lastSet.reps.toString());
       if (lastSet.rir !== undefined) setRir(lastSet.rir);
     }
@@ -106,8 +119,13 @@ export function SetLogger({
                 <div className="text-center">
                   <div className="font-semibold">Set {set.set_number}</div>
                   <div className="text-muted-foreground">
-                    {set.weight}kg × {set.reps}
-                    {set.rir !== undefined && ` @${set.rir}RIR`}
+                    {convertWeight(set.weight)}
+                    {weightUnit} × {set.reps}
+                    {typeof set.rir === 'number'
+                      ? ` @${set.rir}RIR`
+                      : typeof set.rpe === 'number'
+                        ? ` @${set.rpe}RPE`
+                        : ''}
                   </div>
                   <div className="flex gap-1 justify-center mt-1">
                     {set.is_myo_rep && (
@@ -149,7 +167,7 @@ export function SetLogger({
 
             {/* Weight Input */}
             <div className="space-y-2">
-              <Label>Weight (kg)</Label>
+              <Label>Weight ({weightUnit})</Label>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -292,6 +310,63 @@ export function SetLogger({
                 Partial
               </Button>
             </div>
+
+            {isMyoRep && (
+              <div className="space-y-2">
+                <Label>Myo-Rep Count</Label>
+                <div className="flex gap-2 items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setMyoRepCount((c) => Math.max(0, c - 1))}
+                    disabled={myoRepCount === 0}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={myoRepCount}
+                    onChange={(e) => setMyoRepCount(Number(e.target.value))}
+                    className="text-center w-20"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setMyoRepCount((c) => c + 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            {isPartial && (
+              <div className="space-y-2">
+                <Label>Partial Count</Label>
+                <div className="flex gap-2 items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPartialCount((c) => Math.max(0, c - 1))}
+                    disabled={partialCount === 0}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={partialCount}
+                    onChange={(e) => setPartialCount(Number(e.target.value))}
+                    className="text-center w-20"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPartialCount((c) => c + 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Log Set Button */}
             <Button

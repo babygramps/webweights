@@ -19,10 +19,12 @@ import {
   calculatePercentage1RM,
   estimateRepsAt1RMPercentage,
 } from '@/lib/utils/1rm-calculator';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
 
 export function OneRMCalculator() {
+  const { weightUnit } = useUserPreferences();
   const [weight, setWeight] = useState<string>('');
   const [reps, setReps] = useState<string>('');
   const [results, setResults] = useState<{ formula: string; value: number }[]>(
@@ -76,11 +78,11 @@ export function OneRMCalculator() {
         {/* Input Section */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="weight">Weight (lbs)</Label>
+            <Label htmlFor="weight">Weight ({weightUnit})</Label>
             <Input
               id="weight"
               type="number"
-              placeholder="225"
+              placeholder={weightUnit === 'kg' ? '100' : '225'}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
             />
@@ -120,12 +122,16 @@ export function OneRMCalculator() {
                     <p className="text-xs text-muted-foreground">
                       {result.formula}
                     </p>
-                    <p className="text-lg font-semibold">{result.value} lbs</p>
+                    <p className="text-lg font-semibold">
+                      {result.value} {weightUnit}
+                    </p>
                   </div>
                 ))}
                 <div className="p-3 bg-primary/10 rounded-lg text-center border-2 border-primary">
                   <p className="text-xs font-medium">Average</p>
-                  <p className="text-lg font-bold">{average} lbs</p>
+                  <p className="text-lg font-bold">
+                    {average} {weightUnit}
+                  </p>
                 </div>
               </div>
             </div>
@@ -147,7 +153,7 @@ export function OneRMCalculator() {
                       <tr key={pct} className="border-t">
                         <td className="px-3 py-2 font-medium">{pct}%</td>
                         <td className="px-3 py-2 text-center">
-                          {calculatePercentage1RM(average, pct)} lbs
+                          {calculatePercentage1RM(average, pct)} {weightUnit}
                         </td>
                         <td className="px-3 py-2 text-center text-muted-foreground">
                           ~{estimateRepsAt1RMPercentage(pct)}
