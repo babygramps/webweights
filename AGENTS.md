@@ -1,139 +1,121 @@
-# AGENTS.md
+# AGENT.md
 
-## Code Style & Formatting
-
-- **TypeScript/JavaScript:**
-
-  - Use ESLint and Prettier (config in repo).
-  - Run `pnpm lint` and `pnpm format` before committing.
-  - Prefer explicit types; avoid `any`.
-  - Use functional components and hooks for React.
-  - Use shadcn/ui and Tailwind CSS for UI.
-
-- **Naming Conventions:**
-
-  - Components: `PascalCase` (e.g., `WorkoutLogger.tsx`)
-  - Functions/variables: `camelCase`
-  - Database tables: `snake_case`
-  - Constants: `UPPER_SNAKE_CASE`
-  - Pages/routes: `kebab-case` (e.g., `/stats`)
-
-- **File Structure:**
-  - Page components: `src/app/`
-  - Reusable UI: `src/components/ui/`
-  - Feature modules: `src/components/{feature}/`
-  - Database logic: `src/db/`, `src/lib/supabase/`
-  - Types: `types/`
+This file is read by **all OpenAI‑powered agents, contributors, CI jobs, and human developers** working in this repository. It defines mandatory coding standards, workflows, and the _runtime checklist_ an agent must satisfy **before returning code**. Deviation from any **MUST** rule is treated as an error.
 
 ---
 
-## Testing
+## 1  Code Style & Formatting (**MUST**)
 
-- **Unit & Integration:**
+### 1.1  Tooling
 
-  - Use Jest and React Testing Library.
-  - Place tests in `src/test/` or alongside components as `*.test.ts(x)`.
-  - Mock external API calls and DB access.
-  - Run `pnpm test` before pushing.
+- **ESLint** + **Prettier** – configs live at `.eslintrc.*` and `.prettierrc`.
+- Run `pnpm lint --max-warnings 0` **and** \`pnpm format
 
-- **E2E:**
-  - Use Playwright (see `e2e/`).
-  - Run `pnpm e2e` for end-to-end tests.
+  # Run unit/integration tests only when they exist
 
----
+  if \[ -d tests ] && \[ "\$(ls -A tests 2>/dev/null)" ]; then pnpm test; fi`*(skip if the`tests/\` directory is empty).\*
 
-## Workflows
-
-- **Development:**
-
-  - Use feature branches: `feature/{short-description}`
-  - Commit messages: Conventional Commits (`feat:`, `fix:`, `chore:`, etc.)
-  - Run `pnpm install`, `pnpm lint`, `pnpm test` before PRs.
-  - Use Husky pre-commit hooks (auto-run on commit).
-
-- **Database:**
-
-  - Use Drizzle ORM for schema and queries.
-  - Migrations in `supabase/migrations/`.
-  - Run `pnpm db:migrate` after pulling new migrations.
-
-- **Logging & Error Handling:**
-  - Use robust logging in all async/data-fetching code.
-  - Always provide user-friendly error states in UI.
-  - Log errors to the console and (optionally) to Supabase.
+- **E2E:** Playwright – `pnpm e2e`.
+- Mock all external API calls and DB access in tests.
 
 ---
 
-## Architecture
+## 3  Workflows
 
-- **State Management:**
+### 3.1  Branch & Commit
 
-  - Use Zustand for global state.
-  - Use TanStack Query for server data.
+- Branch names: `feature/<slug>` or `fix/<slug>`.
+- Messages: Conventional Commits (`feat: …`, `fix: …`, `chore: …`).
 
-- **API/Data:**
+### 3.2  Pre‑commit (Husky + lint‑staged)
 
-  - Use Supabase for auth and data.
-  - Use Drizzle ORM for all DB access.
-  - Never expose secrets in the client.
+Husky triggers **lint‑staged** which _auto‑fixes_ and blocks on remaining errors.
 
-- **UI/UX:**
-  - Use shadcn/ui and Tailwind for all new UI.
-  - Ensure mobile responsiveness and accessibility (ARIA, keyboard nav).
-  - Use Recharts for all charts/analytics.
+`.husky/pre-commit`
 
----
+```bash
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-## Feature-Specific Instructions
+npx lint-staged
+```
 
-- **Stats Dashboard (`/stats`):**
+`package.json`
 
-  - Use reusable chart components (`ProgressChart`, `PRCard`).
-  - Aggregate data efficiently in the backend.
-  - Provide filter bars for date, exercise, muscle group.
-  - Always show loading and error states with logging.
+```json
+"lint-staged": {
+  "*.{js,jsx,ts,tsx}": [
+    "eslint --fix --max-warnings 0",
+    "prettier --write"
+  ]
+}
+```
 
-- **Mesocycle Builder:**
-  - Use multi-step wizards.
-  - Validate all user input.
-  - Save progress in local state and DB.
+### 3.3  Continuous Integration
 
----
-
-## Commands
-
-- **Start Dev Server:**  
-  `pnpm dev`
-- **Lint:**  
-  `pnpm lint`
-- **Format:**  
-  `pnpm format`
-- **Test:**  
-  `pnpm test`
-- **E2E:**  
-  `pnpm e2e`
-- **DB Migrate:**  
-  `pnpm db:migrate`
+- `pnpm install --frozen-lockfile`
+- `pnpm lint && pnpm test && pnpm e2e`
 
 ---
 
-## Best Practices
+## 4  Architecture & Libraries
 
-- **Keep it concise:** Only document rules that matter.
-- **Update this file:** When workflows or standards change.
-- **Version-controlled:** Always commit changes to `AGENTS.md`.
-
----
-
-## References
-
-- [Project Roadmap Best Practices (Rocketlane)](https://www.rocketlane.com/blogs/project-roadmap)
-- [shadcn/ui Docs](https://ui.shadcn.com/)
-- [Next.js Docs](https://nextjs.org/docs)
-- [Drizzle ORM Docs](https://orm.drizzle.team/docs)
-- [Supabase Docs](https://supabase.com/docs)
-- [Recharts Docs](https://recharts.org/en-US/guide)
+- **State:** Zustand; server data: TanStack Query.
+- **UI:** shadcn/ui + Tailwind CSS; charts via Recharts.
+- **Data layer:** Supabase + Drizzle ORM (migrations in `supabase/migrations/`).
+- **Error handling:** user‑friendly messages + console logging; optional Supabase telemetry.
+- **Security:** never commit secrets.
 
 ---
 
-**This file is for OpenAI Codex agents, contributors, and maintainers. Adhere to these rules for all code, PRs, and AI-generated output.**
+## 5  Agent Runtime Checklist (**ABSOLUTE MUST**)
+
+An OpenAI agent **MUST** execute the following steps _before_ returning its final answer:
+
+1. **Generate** the code / patch.
+2. **Run** the commands below inside a virtual shell:
+
+   ```bash
+   pnpm install --ignore-scripts --frozen-lockfile
+   pnpm lint --fix --max-warnings 0
+   pnpm format
+   pnpm test
+   ```
+
+3. **If any command exits non‑zero**, iteratively amend the code _until_ all commands succeed (max 3 internal iterations).
+4. Return the final diff or files _only after all checks pass_. If still failing after 3 iterations, reply with an error report **instead of broken code**.
+
+---
+
+## 6  Common Commands (reference)
+
+| Task         | Command           |
+| ------------ | ----------------- |
+| Dev server   | `pnpm dev`        |
+| Lint         | `pnpm lint`       |
+| Format       | `pnpm format`     |
+| Unit tests   | `pnpm test`       |
+| E2E tests    | `pnpm e2e`        |
+| DB migration | `pnpm db:migrate` |
+
+---
+
+## 7  Updating this file
+
+- Keep it concise and current.
+- Update when ESLint/Prettier configs, workflows, or conventions change.
+- Commit updates alongside related code changes when feasible.
+
+---
+
+### References
+
+- [shadcn/ui Docs](https://ui.shadcn.com/)
+- [Next.js Docs](https://nextjs.org/docs)
+- [Drizzle ORM Docs](https://orm.drizzle.team/docs)
+- [Supabase Docs](https://supabase.com/docs)
+- [Recharts Docs](https://recharts.org/en-US/guide)
+
+---
+
+**Follow every MUST in this document. Passing lint, format, tests, and type‑check _before_ committing is non‑negotiable.**
