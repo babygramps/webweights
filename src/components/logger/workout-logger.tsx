@@ -20,7 +20,7 @@ import { RestTimer } from './rest-timer';
 import { ExerciseSelector } from './exercise-selector';
 import { format } from 'date-fns';
 import { parseLocalDate } from '@/lib/utils/date';
-
+import { SetsList } from './SetsList';
 
 interface Workout {
   id: string;
