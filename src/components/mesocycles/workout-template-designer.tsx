@@ -108,6 +108,7 @@ export function WorkoutTemplateDesigner({
     templateId: string,
     exerciseId: string,
     exerciseName: string,
+    closeModal = true,
   ) => {
     const template = templates.find((t) => t.id === templateId);
     if (!template) return;
@@ -131,6 +132,18 @@ export function WorkoutTemplateDesigner({
     );
     updateTemplate(templateId, {
       exercises: [...template.exercises, newExercise],
+    });
+    if (closeModal) {
+      setShowExerciseSelector(null);
+    }
+  };
+
+  const addExercisesToTemplate = (
+    templateId: string,
+    exercisesToAdd: Array<{ id: string; name: string }>,
+  ) => {
+    exercisesToAdd.forEach((ex) => {
+      addExerciseToTemplate(templateId, ex.id, ex.name, false);
     });
     setShowExerciseSelector(null);
   };
@@ -377,17 +390,13 @@ export function WorkoutTemplateDesigner({
       {/* Exercise Selector Modal */}
       {showExerciseSelector && (
         <ExerciseSelector
-          onSelect={(exerciseId: string, exerciseName?: string) => {
-            console.log(
-              '[WorkoutTemplateDesigner] Exercise selected:',
-              exerciseId,
-              exerciseName,
-            );
-            addExerciseToTemplate(
-              showExerciseSelector,
-              exerciseId,
-              exerciseName || 'Exercise',
-            );
+          multiSelect
+          onSelect={(ids: string[], names?: string[]) => {
+            const selections = ids.map((id, i) => ({
+              id,
+              name: names?.[i] || 'Exercise',
+            }));
+            addExercisesToTemplate(showExerciseSelector, selections);
           }}
           onClose={() => setShowExerciseSelector(null)}
         />

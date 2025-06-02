@@ -185,43 +185,40 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   };
 
-  const handleAddExercise = async (
-    exerciseId: string,
-    exerciseName?: string,
-  ) => {
+  const handleAddExercise = async (exerciseIds: string[]) => {
     if (!workout) return;
 
     try {
-      console.log('Adding exercise to workout:', exerciseId, exerciseName);
+      console.log('Adding exercises to workout:', exerciseIds);
       const supabase = createClient();
 
-      // Get the next order index
-      const maxOrderIdx =
+      let orderIdx =
         workout.workout_exercises?.reduce(
           (max, ex) => Math.max(max, ex.order_idx || 0),
           0,
         ) || 0;
 
-      const { error } = await supabase.from('workout_exercises').insert({
-        workout_id: workoutId,
-        exercise_id: exerciseId,
-        order_idx: maxOrderIdx + 1,
-        defaults: {
-          sets: 3,
-          reps: '8-12',
-          rest: '2:00',
-        },
-      });
-
-      if (error) {
-        console.error('Error adding exercise:', error);
-        throw error;
+      for (let i = 0; i < exerciseIds.length; i++) {
+        const { error } = await supabase.from('workout_exercises').insert({
+          workout_id: workoutId,
+          exercise_id: exerciseIds[i],
+          order_idx: ++orderIdx,
+          defaults: {
+            sets: 3,
+            reps: '8-12',
+            rest: '2:00',
+          },
+        });
+        if (error) {
+          console.error('Error adding exercise:', error);
+          throw error;
+        }
       }
 
-      console.log('Added exercise successfully');
-      toast.success('Exercise added!');
+      console.log('Added exercises successfully');
+      toast.success('Exercise(s) added!');
       setIsAddingExercise(false);
-      fetchWorkout(); // Refresh workout data
+      fetchWorkout();
     } catch (err) {
       console.error('Failed to add exercise:', err);
       toast.error('Failed to add exercise');
@@ -501,6 +498,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
       {/* Exercise Selector Modal */}
       {isAddingExercise && (
         <ExerciseSelector
+          multiSelect
           onSelect={handleAddExercise}
           onClose={() => setIsAddingExercise(false)}
         />
