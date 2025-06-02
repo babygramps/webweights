@@ -45,7 +45,9 @@ import {
   WorkoutTemplate,
 } from '@/components/mesocycles/workout-template-designer';
 import { ProgressiveIntensityDesigner } from '@/components/mesocycles/progressive-intensity-designer';
+import { WorkoutWeekPreview } from '@/components/mesocycles/workout-week-preview';
 import { MesocycleProgression } from '@/types/progression';
+import { Badge } from '@/components/ui/badge';
 
 const mesocycleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
@@ -57,6 +59,16 @@ const mesocycleSchema = z.object({
 });
 
 type MesocycleFormData = z.infer<typeof mesocycleSchema>;
+
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+];
 
 const STEPS = [
   { id: 'basics', title: 'Basic Info', description: 'Name and duration' },
@@ -480,41 +492,37 @@ export function MesocycleWizard() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Workout Schedule</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {workoutTemplates.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">
-                    No workouts scheduled
-                  </p>
-                ) : (
-                  workoutTemplates.map((template) => (
-                    <div key={template.id} className="border rounded-lg p-4">
-                      <h4 className="font-medium">{template.label}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {template.dayOfWeek
-                          .map((d) => {
-                            const days = [
-                              'Sunday',
-                              'Monday',
-                              'Tuesday',
-                              'Wednesday',
-                              'Thursday',
-                              'Friday',
-                              'Saturday',
-                            ];
-                            return days[d];
-                          })
-                          .join(', ')}{' '}
-                        • {template.exercises.length} exercises
-                      </p>
+            {workoutTemplates.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Workout Schedule</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {workoutTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="flex items-center justify-between p-2 bg-muted rounded-md"
+                    >
+                      <div>
+                        <p className="font-medium">{template.label}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {template.exercises.length} exercises
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        {DAYS_OF_WEEK.filter((day) =>
+                          template.dayOfWeek.includes(day.value),
+                        ).map((day) => (
+                          <Badge key={day.value} variant="secondary">
+                            {day.label.slice(0, 3)}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             {progression && (
               <Card>
@@ -552,6 +560,15 @@ export function MesocycleWizard() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {workoutTemplates.length > 0 && (
+              <WorkoutWeekPreview
+                startDate={reviewFormData.startDate}
+                weeks={reviewFormData.weeks}
+                workoutTemplates={workoutTemplates}
+                progression={progression}
+              />
             )}
           </div>
         );
