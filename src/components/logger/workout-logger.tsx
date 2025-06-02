@@ -498,6 +498,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
       {/* Exercise Selector Modal */}
       {isAddingExercise && (
         <ExerciseSelector
+          multiSelect
           onSelect={handleAddExercise}
           onClose={() => setIsAddingExercise(false)}
         />
