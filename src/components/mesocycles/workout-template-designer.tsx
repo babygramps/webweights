@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -37,7 +37,7 @@ export interface WorkoutTemplate {
 
 interface WorkoutTemplateDesignerProps {
   templates: WorkoutTemplate[];
-  onTemplatesChange: (templates: WorkoutTemplate[]) => void;
+  onTemplatesChange: Dispatch<SetStateAction<WorkoutTemplate[]>>;
 }
 
 const DAYS_OF_WEEK = [
@@ -72,7 +72,7 @@ export function WorkoutTemplateDesigner({
       exercises: [],
     };
     console.log('[WorkoutTemplateDesigner] Adding new template:', newTemplate);
-    onTemplatesChange([...templates, newTemplate]);
+    onTemplatesChange((prev) => [...prev, newTemplate]);
   };
 
   const updateTemplate = (
@@ -84,14 +84,14 @@ export function WorkoutTemplateDesigner({
       templateId,
       updates,
     );
-    onTemplatesChange(
-      templates.map((t) => (t.id === templateId ? { ...t, ...updates } : t)),
+    onTemplatesChange((prev) =>
+      prev.map((t) => (t.id === templateId ? { ...t, ...updates } : t)),
     );
   };
 
   const deleteTemplate = (templateId: string) => {
     console.log('[WorkoutTemplateDesigner] Deleting template:', templateId);
-    onTemplatesChange(templates.filter((t) => t.id !== templateId));
+    onTemplatesChange((prev) => prev.filter((t) => t.id !== templateId));
   };
 
   const duplicateTemplate = (template: WorkoutTemplate) => {
@@ -101,50 +101,31 @@ export function WorkoutTemplateDesigner({
       label: `${template.label} (Copy)`,
     };
     console.log('[WorkoutTemplateDesigner] Duplicating template:', newTemplate);
-    onTemplatesChange([...templates, newTemplate]);
-  };
-
-  const addExerciseToTemplate = (
-    templateId: string,
-    exerciseId: string,
-    exerciseName: string,
-    closeModal = true,
-  ) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) return;
-
-    const newExercise: WorkoutExerciseTemplate = {
-      exerciseId,
-      exerciseName,
-      orderIdx: template.exercises.length,
-      defaults: {
-        sets: 3,
-        reps: '8-12',
-        rir: 2,
-        rest: '2:00',
-      },
-    };
-
-    console.log(
-      '[WorkoutTemplateDesigner] Adding exercise to template:',
-      templateId,
-      newExercise,
-    );
-    updateTemplate(templateId, {
-      exercises: [...template.exercises, newExercise],
-    });
-    if (closeModal) {
-      setShowExerciseSelector(null);
-    }
+    onTemplatesChange((prev) => [...prev, newTemplate]);
   };
 
   const addExercisesToTemplate = (
     templateId: string,
     exercisesToAdd: Array<{ id: string; name: string }>,
   ) => {
-    exercisesToAdd.forEach((ex) => {
-      addExerciseToTemplate(templateId, ex.id, ex.name, false);
-    });
+    onTemplatesChange((prev) =>
+      prev.map((t) => {
+        if (t.id !== templateId) return t;
+        const startIndex = t.exercises.length;
+        const newExercises = exercisesToAdd.map((ex, idx) => ({
+          exerciseId: ex.id,
+          exerciseName: ex.name,
+          orderIdx: startIndex + idx,
+          defaults: {
+            sets: 3,
+            reps: '8-12',
+            rir: 2,
+            rest: '2:00',
+          },
+        }));
+        return { ...t, exercises: [...t.exercises, ...newExercises] };
+      }),
+    );
     setShowExerciseSelector(null);
   };
 
@@ -153,58 +134,60 @@ export function WorkoutTemplateDesigner({
     exerciseIndex: number,
     updates: Partial<WorkoutExerciseTemplate>,
   ) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) return;
-
-    const updatedExercises = [...template.exercises];
-    updatedExercises[exerciseIndex] = {
-      ...updatedExercises[exerciseIndex],
-      ...updates,
-    };
-
     console.log(
       '[WorkoutTemplateDesigner] Updating exercise:',
       templateId,
       exerciseIndex,
       updates,
     );
-    updateTemplate(templateId, { exercises: updatedExercises });
+    onTemplatesChange((prev) =>
+      prev.map((t) => {
+        if (t.id !== templateId) return t;
+        const updatedExercises = [...t.exercises];
+        updatedExercises[exerciseIndex] = {
+          ...updatedExercises[exerciseIndex],
+          ...updates,
+        };
+        return { ...t, exercises: updatedExercises };
+      }),
+    );
   };
 
   const removeExercise = (templateId: string, exerciseIndex: number) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) return;
-
-    const updatedExercises = template.exercises.filter(
-      (_, i) => i !== exerciseIndex,
-    );
-    // Re-index exercises
-    updatedExercises.forEach((ex, i) => {
-      ex.orderIdx = i;
-    });
-
     console.log(
       '[WorkoutTemplateDesigner] Removing exercise:',
       templateId,
       exerciseIndex,
     );
-    updateTemplate(templateId, { exercises: updatedExercises });
+    onTemplatesChange((prev) =>
+      prev.map((t) => {
+        if (t.id !== templateId) return t;
+        const updatedExercises = t.exercises.filter(
+          (_, i) => i !== exerciseIndex,
+        );
+        updatedExercises.forEach((ex, i) => {
+          ex.orderIdx = i;
+        });
+        return { ...t, exercises: updatedExercises };
+      }),
+    );
   };
 
   const toggleDayOfWeek = (templateId: string, day: number) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) return;
-
-    const updatedDays = template.dayOfWeek.includes(day)
-      ? template.dayOfWeek.filter((d) => d !== day)
-      : [...template.dayOfWeek, day].sort();
-
     console.log(
       '[WorkoutTemplateDesigner] Toggling day for template:',
       templateId,
       day,
     );
-    updateTemplate(templateId, { dayOfWeek: updatedDays });
+    onTemplatesChange((prev) =>
+      prev.map((t) => {
+        if (t.id !== templateId) return t;
+        const updatedDays = t.dayOfWeek.includes(day)
+          ? t.dayOfWeek.filter((d) => d !== day)
+          : [...t.dayOfWeek, day].sort();
+        return { ...t, dayOfWeek: updatedDays };
+      }),
+    );
   };
 
   return (
