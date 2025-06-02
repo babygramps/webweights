@@ -76,6 +76,11 @@ export function ProgressiveIntensityDesigner({
   );
   const hasEmittedInitial = React.useRef(false);
 
+  // Store original intensities for each week when deload is toggled on
+  const originalIntensitiesRef = React.useRef<
+    Record<number, IntensityParameters>
+  >({});
+
   // Helper function to create and emit progression
   const createAndEmitProgression = useCallback(
     (updatedProgressions: WeekIntensity[], updatedType?: ProgressionType) => {
@@ -143,22 +148,53 @@ export function ProgressiveIntensityDesigner({
       isDeload?: boolean,
     ) => {
       setWeeklyProgressions((prev) => {
+        const prevWeek = prev.find((p) => p.week === weekNumber);
+
+        // If toggling deload ON, store the original intensity
+        if (
+          typeof isDeload === 'boolean' &&
+          isDeload &&
+          prevWeek &&
+          !prevWeek.isDeload
+        ) {
+          originalIntensitiesRef.current[weekNumber] = prevWeek.intensity;
+        }
+
+        // If toggling deload OFF, restore the original intensity if available
+        let nextIntensity = intensity;
+        if (
+          typeof isDeload === 'boolean' &&
+          !isDeload &&
+          prevWeek &&
+          prevWeek.isDeload
+        ) {
+          const original = originalIntensitiesRef.current[weekNumber];
+          if (original) {
+            nextIntensity = original;
+            delete originalIntensitiesRef.current[weekNumber];
+          }
+        }
+
         const updated = prev.map((p) =>
           p.week === weekNumber
-            ? { ...p, intensity, isDeload: isDeload ?? p.isDeload }
+            ? {
+                ...p,
+                intensity: nextIntensity,
+                isDeload: isDeload ?? p.isDeload,
+              }
             : p,
         );
         if (!updated.find((p) => p.week === weekNumber)) {
           updated.push({
             week: weekNumber,
-            intensity,
+            intensity: nextIntensity,
             isDeload: isDeload || false,
           });
         }
         const sortedUpdated = updated.sort((a, b) => a.week - b.week);
         console.log('[ProgressiveIntensityDesigner] handleUpdateWeek', {
           weekNumber,
-          intensity,
+          intensity: nextIntensity,
           isDeload,
           prev,
           sortedUpdated,
