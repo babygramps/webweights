@@ -91,8 +91,7 @@ export function ProgressiveIntensityDesigner({
     },
   );
 
-  const initialTab: 'chart' | 'template' | 'settings' | 'strategy' =
-    initialProgression ? 'chart' : 'template';
+  const initialTab: 'chart' | 'template' | 'settings' | 'strategy' = 'template'; // Always start with template tab
   const [activeTab, setActiveTab] = useState<
     'chart' | 'template' | 'settings' | 'strategy'
   >(initialTab);
@@ -335,8 +334,8 @@ export function ProgressiveIntensityDesigner({
             }
           >
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="chart">Chart</TabsTrigger>
               <TabsTrigger value="template">Templates</TabsTrigger>
+              <TabsTrigger value="chart">Chart</TabsTrigger>
               <TabsTrigger value="strategy">Strategy</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
