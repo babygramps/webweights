@@ -86,9 +86,15 @@ const STEPS = [
   { id: 'review', title: 'Review', description: 'Confirm your mesocycle' },
 ];
 
-export function MesocycleEditWizard({ mesocycleId }: { mesocycleId: string }) {
+export function MesocycleEditWizard({
+  mesocycleId,
+  initialStep = 0,
+}: {
+  mesocycleId: string;
+  initialStep?: number;
+}) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(
     [],
   );
@@ -97,6 +103,14 @@ export function MesocycleEditWizard({ mesocycleId }: { mesocycleId: string }) {
   );
   const [saving, setSaving] = useState(false);
   const [existingWorkouts, setExistingWorkouts] = useState<number>(0);
+  const [workouts, setWorkouts] = useState<
+    Array<{
+      id: string;
+      scheduled_for: string;
+      label: string;
+      week_number?: number;
+    }>
+  >([]);
 
   const form = useForm<MesocycleFormData>({
     resolver: zodResolver(mesocycleSchema),
@@ -147,6 +161,13 @@ export function MesocycleEditWizard({ mesocycleId }: { mesocycleId: string }) {
         .select('id', { count: 'exact', head: true })
         .eq('mesocycle_id', mesocycleId);
       setExistingWorkouts(count || 0);
+
+      const { data: workoutData } = await supabase
+        .from('workouts')
+        .select('id, scheduled_for, label, week_number')
+        .eq('mesocycle_id', mesocycleId)
+        .order('scheduled_for', { ascending: true });
+      setWorkouts(workoutData || []);
     };
     loadData();
   }, [mesocycleId, router, form]);
@@ -440,6 +461,33 @@ export function MesocycleEditWizard({ mesocycleId }: { mesocycleId: string }) {
       case 1:
         return (
           <>
+            {workouts.length > 0 && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle>Existing Workouts</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {workouts.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center justify-between p-2 border rounded-md"
+                    >
+                      <div>
+                        <p className="font-medium">{w.label}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(parseLocalDate(w.scheduled_for), 'PPP')}
+                        </p>
+                      </div>
+                      {w.week_number && (
+                        <Badge variant="secondary" className="text-xs">
+                          Week {w.week_number}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
             {existingWorkouts > 0 && (
               <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
