@@ -472,6 +472,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
                         partial_count: s.partial_count,
                       }))}
                     defaults={selectedExercise.defaults}
+                    exercise={selectedExercise.exercise}
                     onLogSet={async (setData) =>
                       await handleLogSet(selectedExercise.exercise_id, setData)
                     }
