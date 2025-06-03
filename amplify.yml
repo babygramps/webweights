@@ -9,14 +9,14 @@ applications:
             - npm install -g pnpm@latest
             - echo "Installing dependencies..."
             - pnpm install --frozen-lockfile
-            - echo "Environment variables check:"
-            - echo "DATABASE_URL set: $([ -n \"$DATABASE_URL\" ] && echo 'YES' || echo 'NO')"
-            - echo "NEXT_PUBLIC_SUPABASE_URL set: $([ -n \"$NEXT_PUBLIC_SUPABASE_URL\" ] && echo 'YES' || echo 'NO')"
+            - echo "Environment variables check"
+            - 'echo "DATABASE_URL set: $([ -n "$DATABASE_URL" ] && echo YES || echo NO)"'
+            - 'echo "NEXT_PUBLIC_SUPABASE_URL set: $([ -n "$NEXT_PUBLIC_SUPABASE_URL" ] && echo YES || echo NO)"'
         build:
           commands:
             - echo "Building the application..."
-            - echo "Final environment check before build:"
-            - printenv | grep -E "(DATABASE_URL|SUPABASE)" || echo "No relevant env vars found"
+            - echo "Final environment check before build"
+            - 'printenv | grep -E "(DATABASE_URL|SUPABASE)" || echo "No relevant env vars found"'
             - pnpm run build
       artifacts:
         baseDirectory: .next
