@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
     'localhost',
     '127.0.0.1',
   ],
+  // Ensure environment variables are available at runtime
+  env: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  },
+  // Enable experimental features for better serverless support
+  experimental: {
+    serverComponentsExternalPackages: ['postgres'],
+  },
 };
 
 export default nextConfig;
