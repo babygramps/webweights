@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,7 @@ interface SetLoggerProps {
     sets?: number;
     reps?: string;
     rir?: number;
+    rpe?: number;
     rest?: string;
   };
   exercise: Exercise;
@@ -51,12 +52,17 @@ export function SetLogger({
   const { weightUnit, convertWeight } = useUserPreferences();
   const [weight, setWeight] = useState<string>('');
   const [reps, setReps] = useState<string>('');
-  const [rir, setRir] = useState<number | undefined>(defaults?.rir);
+  const [rir, setRir] = useState<number | undefined>(
+    defaults?.rir ??
+      (defaults?.rpe !== undefined ? 10 - defaults.rpe : undefined),
+  );
   const [isMyoRep, setIsMyoRep] = useState(false);
   const [myoRepCount, setMyoRepCount] = useState(0);
   const [isPartial, setIsPartial] = useState(false);
   const [partialCount, setPartialCount] = useState(0);
-  const [intensityType, setIntensityType] = useState<'rir' | 'rpe'>('rir');
+  const [intensityType, setIntensityType] = useState<'rir' | 'rpe'>(
+    defaults?.rpe !== undefined ? 'rpe' : 'rir',
+  );
   const [selectedBarbellType, setSelectedBarbellType] = useState<string>('');
 
   // Get the last set's data for quick re-use
@@ -69,6 +75,15 @@ export function SetLogger({
   // Get barbell weights based on user's unit preference
   const barbellWeights =
     weightUnit === 'lbs' ? BARBELL_WEIGHTS_LBS : BARBELL_WEIGHTS;
+
+  useEffect(() => {
+    if (previousSets.length === 0 && defaults?.reps && !reps) {
+      const first = parseInt(defaults.reps.split('-')[0]);
+      if (!isNaN(first)) {
+        setReps(first.toString());
+      }
+    }
+  }, [previousSets.length, defaults, reps]);
 
   console.log('SetLogger Debug:', {
     exerciseName: exercise.name,
@@ -236,7 +251,10 @@ export function SetLogger({
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="text-center mb-4">
-              <h3 className="font-semibold">Set {currentSetNumber}</h3>
+              <h3 className="font-semibold">
+                Set {currentSetNumber}
+                {defaults?.sets ? ` of ${defaults.sets}` : ''}
+              </h3>
               {lastSet && (
                 <Button
                   variant="ghost"
