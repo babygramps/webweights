@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format, addWeeks, addDays, startOfWeek } from 'date-fns';
+import { format, addWeeks } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -48,6 +49,11 @@ import { ProgressiveIntensityDesigner } from '@/components/mesocycles/progressiv
 import { WorkoutWeekPreview } from '@/components/mesocycles/workout-week-preview';
 import { MesocycleProgression } from '@/types/progression';
 import { Badge } from '@/components/ui/badge';
+import {
+  generateWorkoutsFromTemplates,
+  generateMesocycleExport,
+  downloadJson,
+} from '@/lib/utils/mesocycle-export-utils';
 
 const mesocycleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
@@ -125,98 +131,6 @@ export function MesocycleWizard() {
     setCurrentStep(currentStep - 1);
   };
 
-  const generateWorkoutsFromTemplates = (
-    templates: WorkoutTemplate[],
-    startDate: Date,
-    weeks: number,
-    mesocycleId: string,
-  ) => {
-    const workouts: Array<{
-      id: string;
-      mesocycle_id: string;
-      scheduled_for: string;
-      label: string;
-      week_number: number;
-      intensity_modifier?: object;
-    }> = [];
-    const exercises: Array<{
-      id: string;
-      workout_id: string;
-      exercise_id: string;
-      order_idx: number;
-      defaults: {
-        sets: number;
-        reps: string;
-        rir?: number;
-        rpe?: number;
-        rest: string;
-      };
-    }> = [];
-
-    console.log('[MesocycleWizard] Generating workouts from templates:', {
-      templatesCount: templates.length,
-      startDate: format(startDate, 'yyyy-MM-dd'),
-      weeks,
-    });
-
-    // Get the start of the week containing the start date
-    const firstWeekStart = startOfWeek(startDate, { weekStartsOn: 0 }); // Sunday
-
-    // For each week in the mesocycle
-    for (let week = 0; week < weeks; week++) {
-      const weekStart = addWeeks(firstWeekStart, week);
-      const weekNumber = week + 1;
-
-      // Get intensity modifier for this week
-      const weekProgression = progression?.weeklyProgressions?.find(
-        (p) => p.week === weekNumber,
-      );
-
-      // For each workout template
-      templates.forEach((template) => {
-        // For each scheduled day of the week
-        template.dayOfWeek.forEach((dayOfWeek) => {
-          const workoutDate = addDays(weekStart, dayOfWeek);
-
-          // Only create workout if it's on or after the start date
-          if (workoutDate >= startDate) {
-            const workoutId = crypto.randomUUID();
-
-            // Create workout with intensity modifier
-            workouts.push({
-              id: workoutId,
-              mesocycle_id: mesocycleId,
-              scheduled_for: format(workoutDate, 'yyyy-MM-dd'),
-              label: `${template.label} - Week ${weekNumber}`,
-              week_number: weekNumber,
-              intensity_modifier: weekProgression?.intensity,
-            });
-
-            // Create workout exercises
-            template.exercises.forEach((exercise) => {
-              exercises.push({
-                id: crypto.randomUUID(),
-                workout_id: workoutId,
-                exercise_id: exercise.exerciseId,
-                order_idx: exercise.orderIdx,
-                defaults: exercise.defaults,
-              });
-            });
-
-            console.log('[MesocycleWizard] Generated workout:', {
-              date: format(workoutDate, 'yyyy-MM-dd EEEE'),
-              label: `${template.label} - Week ${weekNumber}`,
-              exerciseCount: template.exercises.length,
-              intensity: weekProgression?.intensity,
-            });
-          }
-        });
-      });
-    }
-
-    return { workouts, exercises };
-  };
-
   const onSubmit = async (data: MesocycleFormData) => {
     try {
       setSaving(true);
@@ -288,6 +202,7 @@ export function MesocycleWizard() {
           data.startDate,
           data.weeks,
           mesocycle.id,
+          progression,
         );
 
         // Insert workouts
@@ -337,6 +252,21 @@ export function MesocycleWizard() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleExport = () => {
+    const values = form.getValues();
+    const exportData = generateMesocycleExport(
+      {
+        title: values.title,
+        weeks: values.weeks,
+        startDate: values.startDate,
+      },
+      workoutTemplates,
+      progression,
+    );
+    const filename = `${values.title || 'mesocycle'}.json`;
+    downloadJson(exportData, filename);
   };
 
   const renderStepContent = () => {
@@ -662,14 +592,24 @@ export function MesocycleWizard() {
           </Button>
 
           {currentStep === STEPS.length - 1 ? (
-            <Button
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={saving}
-              className="flex items-center gap-2"
-            >
-              {saving ? 'Creating...' : 'Create Mesocycle'}
-              <Check className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                className="flex items-center gap-2"
+              >
+                Export
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={saving}
+                className="flex items-center gap-2"
+              >
+                {saving ? 'Creating...' : 'Create Mesocycle'}
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
           ) : (
             <Button onClick={nextStep} className="flex items-center gap-2">
               Next

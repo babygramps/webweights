@@ -91,7 +91,9 @@ export function ProgressiveIntensityDesigner({
     },
   );
 
+
   const initialTab: 'chart' | 'template' | 'settings' | 'strategy' = 'template'; // Always start with template tab
+
   const [activeTab, setActiveTab] = useState<
     'chart' | 'template' | 'settings' | 'strategy'
   >(initialTab);
