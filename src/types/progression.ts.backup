@@ -1,5 +1,3 @@
-import { ProgressionStrategy } from './progression-strategy';
-
 export interface IntensityParameters {
   volume: number; // relative to baseline (100% = week 1)
   weight: number; // percentage increase from baseline
@@ -24,7 +22,6 @@ export interface MesocycleProgression {
   weeklyProgressions: WeekIntensity[];
   progressionType: ProgressionType;
   globalSettings: GlobalProgressionSettings;
-  progressionStrategy?: ProgressionStrategy;
 }
 
 export type ProgressionType =

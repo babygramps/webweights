@@ -411,7 +411,7 @@ export function WeekConfigPanel({
             {/* Intensity Summary */}
             <div className="space-y-2">
               <Label>Intensity Summary</Label>
-              <div className="p-3 bg-gray-50 rounded-lg space-y-2">
+              <div className="p-3 bg-gray-50 dark:bg-card/80 rounded-lg space-y-2 text-gray-900 dark:text-card-foreground">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium">Volume:</span>{' '}

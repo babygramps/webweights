@@ -144,13 +144,15 @@ export function IntensityChart({
               if (active && payload && payload.length) {
                 const data = payload[0].payload as ChartDataPoint;
                 return (
-                  <div className="bg-white p-3 border rounded shadow-lg">
+                  <div className="bg-white dark:bg-card/80 p-3 border rounded shadow-lg text-gray-900 dark:text-card-foreground">
                     <p className="font-semibold">Week {label}</p>
                     {data.isDeload && (
                       <Badge variant="secondary">Deload Week</Badge>
                     )}
                     {data.label && (
-                      <p className="text-sm text-gray-600">{data.label}</p>
+                      <p className="text-sm text-gray-600 dark:text-muted-foreground">
+                        {data.label}
+                      </p>
                     )}
                     <p>
                       {yAxisLabel}: {payload[0].value}
@@ -237,13 +239,13 @@ export function IntensityChart({
                     if (active && payload && payload.length) {
                       const data = payload[0].payload as ChartDataPoint;
                       return (
-                        <div className="bg-white p-3 border rounded shadow-lg">
+                        <div className="bg-white dark:bg-card/80 p-3 border rounded shadow-lg text-gray-900 dark:text-card-foreground">
                           <p className="font-semibold">Week {label}</p>
                           {data.isDeload && (
                             <Badge variant="secondary">Deload Week</Badge>
                           )}
                           {data.label && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-muted-foreground">
                               {data.label}
                             </p>
                           )}
