@@ -18,6 +18,11 @@ import {
 } from './workout-template-designer';
 import { MesocycleProgression, WeekIntensity } from '@/types/progression';
 import { cn } from '@/lib/utils';
+import {
+  applyProgressionStrategyToExercise,
+  determineExerciseType,
+  EnhancedExerciseDefaults,
+} from '@/lib/utils/progression-strategy-utils';
 
 interface WorkoutWeekPreviewProps {
   startDate: Date;
@@ -25,15 +30,6 @@ interface WorkoutWeekPreviewProps {
   workoutTemplates: WorkoutTemplate[];
   progression?: MesocycleProgression | null;
 }
-
-type ExerciseDefaults = {
-  sets: number;
-  reps: string;
-  rir?: number;
-  rpe?: number;
-  rest: string;
-  intensityModifier?: string;
-};
 
 export function WorkoutWeekPreview({
   startDate,
@@ -48,6 +44,7 @@ export function WorkoutWeekPreview({
     weeks,
     templates: workoutTemplates.length,
     hasProgression: !!progression,
+    progressionStrategy: progression?.progressionStrategy,
   });
 
   const toggleWeek = (weekNumber: number) => {
@@ -89,37 +86,15 @@ export function WorkoutWeekPreview({
   const applyIntensityToExercise = (
     exercise: WorkoutExerciseTemplate,
     weekIntensity: WeekIntensity | null,
-  ): ExerciseDefaults => {
-    if (!weekIntensity) return exercise.defaults;
-
-    const { intensity } = weekIntensity;
-    const modifiedSets = Math.round(exercise.defaults.sets * intensity.sets);
-
-    // Apply RIR/RPE modifications if they exist
-    const modifiedRir = exercise.defaults.rir
-      ? Math.min(exercise.defaults.rir, intensity.rir)
-      : intensity.rir;
-    const modifiedRpe = exercise.defaults.rpe
-      ? Math.max(exercise.defaults.rpe, intensity.rpe)
-      : intensity.rpe;
-
-    const result: ExerciseDefaults = {
-      ...exercise.defaults,
-      sets: modifiedSets,
-      rir: modifiedRir,
-      rpe: modifiedRpe,
-      intensityModifier: `${Math.round(intensity.volume)}% volume`,
-    };
-
-    console.log(
-      `[WorkoutWeekPreview] Applied intensity to ${exercise.exerciseName}:`,
-      {
-        original: exercise.defaults,
-        modified: result,
-      },
+  ): EnhancedExerciseDefaults => {
+    // Use the new progression strategy utility
+    const exerciseType = determineExerciseType(exercise.exerciseName);
+    return applyProgressionStrategyToExercise(
+      exercise,
+      weekIntensity,
+      progression?.progressionStrategy,
+      exerciseType,
     );
-
-    return result;
   };
 
   const getWorkoutsForWeek = (weekNumber: number) => {
@@ -279,14 +254,19 @@ export function WorkoutWeekPreview({
                                             ` @ RPE ${modifiedDefaults.rpe}`}
                                           {modifiedDefaults.rest &&
                                             ` | Rest: ${modifiedDefaults.rest}`}
+                                          {modifiedDefaults.weight &&
+                                            modifiedDefaults.weight !== 100 &&
+                                            ` | ${modifiedDefaults.weight}% weight`}
                                         </div>
                                       </div>
-                                      {modifiedDefaults.intensityModifier && (
+                                      {modifiedDefaults.intensityDescription && (
                                         <Badge
                                           variant="secondary"
                                           className="text-xs ml-2"
                                         >
-                                          {modifiedDefaults.intensityModifier}
+                                          {
+                                            modifiedDefaults.intensityDescription
+                                          }
                                         </Badge>
                                       )}
                                     </div>

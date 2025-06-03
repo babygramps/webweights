@@ -27,6 +27,11 @@ import {
   PROGRESSION_TEMPLATES,
   applyProgressionTemplate,
 } from '@/lib/progression-templates';
+import { ProgressionStrategySelector } from './progression-strategy-selector';
+import {
+  ProgressionStrategy,
+  DEFAULT_STRATEGIES,
+} from '@/types/progression-strategy';
 
 interface ProgressiveIntensityDesignerProps {
   mesocycleWeeks: number;
@@ -40,7 +45,6 @@ export function ProgressiveIntensityDesigner({
   onProgressionChange,
 }: ProgressiveIntensityDesignerProps) {
   // Initialize state with default or provided progression
-  const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [weeklyProgressions, setWeeklyProgressions] = useState<WeekIntensity[]>(
     () => {
       if (initialProgression?.weeklyProgressions) {
@@ -56,9 +60,24 @@ export function ProgressiveIntensityDesigner({
     },
   );
 
+  const [progressionStrategy, setProgressionStrategy] =
+    useState<ProgressionStrategy>(
+      initialProgression?.progressionStrategy || DEFAULT_STRATEGIES.hypertrophy,
+    );
+
+  const [selectedWeek, setSelectedWeek] = useState<number | undefined>(
+    undefined,
+  );
   const [progressionType, setProgressionType] = useState<ProgressionType>(
     initialProgression?.progressionType || 'linear',
   );
+
+  console.log('[ProgressiveIntensityDesigner] Rendering with:', {
+    mesocycleWeeks,
+    hasProgression: !!initialProgression,
+    progressionType: progressionType,
+    progressionStrategy,
+  });
 
   const [globalSettings] = useState<GlobalProgressionSettings>(
     initialProgression?.globalSettings || {
@@ -71,9 +90,9 @@ export function ProgressiveIntensityDesigner({
     },
   );
 
-  const [activeTab, setActiveTab] = useState<'chart' | 'template' | 'settings'>(
-    'chart',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'chart' | 'template' | 'settings' | 'strategy'
+  >('chart');
   const hasEmittedInitial = React.useRef(false);
 
   // Store original intensities for each week when deload is toggled on
@@ -95,10 +114,17 @@ export function ProgressiveIntensityDesigner({
         weeklyProgressions: updatedProgressions,
         progressionType: updatedType || progressionType,
         globalSettings,
+        progressionStrategy,
       };
       onProgressionChange(progression);
     },
-    [initialProgression, progressionType, globalSettings, onProgressionChange],
+    [
+      initialProgression,
+      progressionType,
+      globalSettings,
+      progressionStrategy,
+      onProgressionChange,
+    ],
   );
 
   // Store the latest createAndEmitProgression function in a ref to avoid stale closures
@@ -131,12 +157,21 @@ export function ProgressiveIntensityDesigner({
 
   // Current week intensity for the panel
   const currentWeekIntensity = useMemo(() => {
+    if (selectedWeek === undefined) {
+      return {
+        week: 1,
+        intensity: DEFAULT_INTENSITY,
+        isDeload: false,
+      } as WeekIntensity;
+    }
+
     return (
-      weeklyProgressions.find((p) => p.week === selectedWeek) || {
+      weeklyProgressions.find((p) => p.week === selectedWeek) ||
+      ({
         week: selectedWeek,
         intensity: DEFAULT_INTENSITY,
         isDeload: false,
-      }
+      } as WeekIntensity)
     );
   }, [weeklyProgressions, selectedWeek]);
 
@@ -277,6 +312,12 @@ export function ProgressiveIntensityDesigner({
 
   return (
     <div className="space-y-6">
+      <ProgressionStrategySelector
+        currentStrategy={progressionStrategy}
+        onStrategyChange={setProgressionStrategy}
+        showDemo={true}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -288,12 +329,15 @@ export function ProgressiveIntensityDesigner({
           <Tabs
             value={activeTab}
             onValueChange={(tab) =>
-              setActiveTab(tab as 'chart' | 'template' | 'settings')
+              setActiveTab(
+                tab as 'chart' | 'template' | 'settings' | 'strategy',
+              )
             }
           >
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="chart">Chart</TabsTrigger>
               <TabsTrigger value="template">Templates</TabsTrigger>
+              <TabsTrigger value="strategy">Strategy</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
@@ -349,6 +393,21 @@ export function ProgressiveIntensityDesigner({
                   </Card>
                 ))}
               </div>
+            </TabsContent>
+
+            <TabsContent value="strategy" className="space-y-4">
+              <ProgressionStrategySelector
+                currentStrategy={progressionStrategy}
+                onStrategyChange={(newStrategy) => {
+                  console.log(
+                    '[ProgressiveIntensityDesigner] Strategy changed:',
+                    newStrategy,
+                  );
+                  setProgressionStrategy(newStrategy);
+                  createAndEmitProgressionRef.current(weeklyProgressions);
+                }}
+                showDemo={true}
+              />
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">

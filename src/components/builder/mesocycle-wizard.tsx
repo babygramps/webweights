@@ -263,6 +263,7 @@ export function MesocycleWizard() {
           baseline_week: progression.baselineWeek,
           weekly_progressions: progression.weeklyProgressions,
           global_settings: progression.globalSettings,
+          progression_strategy: progression.progressionStrategy,
         };
 
         const { error: progressionError } = await supabase
@@ -530,7 +531,7 @@ export function MesocycleWizard() {
                   <CardTitle>Intensity Progression</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Type</p>
@@ -557,6 +558,43 @@ export function MesocycleWizard() {
                         </p>
                       </div>
                     </div>
+
+                    {progression.progressionStrategy && (
+                      <div className="border-t pt-4">
+                        <p className="text-sm font-medium mb-2">
+                          Progression Strategy
+                        </p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">
+                              Primary Focus
+                            </p>
+                            <p className="font-medium capitalize">
+                              {progression.progressionStrategy.primary}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Adjustments</p>
+                            <div className="flex flex-wrap gap-1">
+                              {Object.entries(
+                                progression.progressionStrategy
+                                  .secondaryAdjustments,
+                              )
+                                .filter(([, enabled]) => enabled)
+                                .map(([key]) => (
+                                  <Badge
+                                    key={key}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {key}
+                                  </Badge>
+                                ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
