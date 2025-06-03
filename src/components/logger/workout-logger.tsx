@@ -40,6 +40,7 @@ interface WorkoutExercise {
     sets?: number;
     reps?: string;
     rir?: number;
+    rpe?: number;
     rest?: string;
   };
   exercise: Exercise;
@@ -450,6 +451,17 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
                           (s as LoggedSet & { partial_count?: number })
                             .partial_count ?? 0,
                       }))}
+                    plannedSets={Array.from(
+                      {
+                        length: selectedExercise.defaults?.sets || 0,
+                      },
+                      (_, i) => ({
+                        setNumber: i + 1,
+                        reps: selectedExercise.defaults.reps ?? '',
+                        rir: selectedExercise.defaults.rir,
+                        rpe: selectedExercise.defaults.rpe,
+                      }),
+                    )}
                     onSetUpdated={fetchLoggedSets}
                     onSetDeleted={fetchLoggedSets}
                     onUpdateSet={handleUpdateSet}

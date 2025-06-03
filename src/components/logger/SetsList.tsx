@@ -35,8 +35,16 @@ interface SetUpdates {
   partialCount?: number;
 }
 
+interface PlannedSet {
+  setNumber: number;
+  reps: string;
+  rir?: number;
+  rpe?: number;
+}
+
 interface SetsListProps {
   sets: LoggedSet[];
+  plannedSets?: PlannedSet[];
   onSetUpdated?: () => void;
   onSetDeleted?: () => void;
   onUpdateSet?: (setId: string, updates: SetUpdates) => Promise<void>;
@@ -45,6 +53,7 @@ interface SetsListProps {
 
 export function SetsList({
   sets,
+  plannedSets,
   onSetUpdated,
   onSetDeleted,
   onUpdateSet,
@@ -127,6 +136,33 @@ export function SetsList({
     },
     {} as Record<string, LoggedSet[]>,
   );
+
+  if (sets.length === 0 && plannedSets && plannedSets.length > 0) {
+    return (
+      <div className="space-y-2">
+        {plannedSets.map((set) => (
+          <Card key={set.setNumber}>
+            <CardContent className="p-3 flex items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">
+                Set {set.setNumber}
+              </span>
+              <span className="font-semibold">{set.reps} reps</span>
+              {typeof set.rir === 'number' && (
+                <span className="text-sm text-muted-foreground">
+                  {set.rir} RIR
+                </span>
+              )}
+              {typeof set.rpe === 'number' && (
+                <span className="text-sm text-muted-foreground">
+                  {set.rpe} RPE
+                </span>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
