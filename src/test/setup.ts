@@ -9,7 +9,6 @@ class ResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error assign to global
 global.ResizeObserver = ResizeObserver;
 
 // Extend Vitest's expect method with methods from react-testing-library

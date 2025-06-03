@@ -1,4 +1,4 @@
-import { ProgressionTemplate } from '../progression-templates';
+import { ProgressionTemplate } from '@/types/progression';
 import {
   ProgressionStrategy,
   DEFAULT_STRATEGIES,
