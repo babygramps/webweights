@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-
+import type { VolumeData } from './StatsPageClient';
 
 type PersonalRecord = {
   exerciseId: string;
@@ -289,6 +289,5 @@ export default async function StatsPage() {
         </TabsContent>
       </Tabs>
     </div>
-
   );
 }

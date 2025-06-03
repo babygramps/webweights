@@ -27,7 +27,7 @@ interface PersonalRecord {
   exerciseName: string;
 }
 
-interface VolumeData {
+export interface VolumeData {
   date: string;
   totalVolume: number;
   totalSets: number;
