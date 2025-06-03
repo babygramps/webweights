@@ -23,6 +23,40 @@ This file is read by **all OpenAI-powered agents, contributors, CI jobs, and hum
 
 ---
 
+## 2 AWS Amplify Deployment (**MUST**)
+
+This project deploys to **AWS Amplify**. All code changes **MUST** pass Amplify's build process.
+
+### 2.1 TypeScript Requirements
+
+- **Zero TypeScript errors** – Amplify fails builds on any TS error.
+- All imports **MUST** resolve correctly with proper paths.
+- Export all types that are imported elsewhere.
+- Use absolute imports (`@/...`) consistently for better reliability.
+
+### 2.2 Build Validation
+
+Before any code submission, **MUST** verify the production build works:
+
+```bash
+# Clear any cached build artifacts
+rm -rf .next
+
+# Test production build (same as Amplify)
+pnpm run build
+```
+
+If `pnpm run build` fails locally, it **WILL** fail on Amplify.
+
+### 2.3 Common Amplify Issues to Avoid
+
+- **Missing type exports** – export interfaces/types that are imported across files
+- **Circular dependencies** – avoid importing from files that import back
+- **Case-sensitive paths** – Amplify's Linux environment is case-sensitive
+- **Node.js compatibility** – ensure all dependencies work in Amplify's Node environment
+
+---
+
 ## 3 Workflows
 
 ### 3.1 Branch & Commit
@@ -102,26 +136,58 @@ An OpenAI agent **MUST** execute the following steps _before_ returning its fina
    > }
    > ```
 
-3. **If any command exits non-zero**, iteratively amend the code _until_ all commands succeed (max 3 internal iterations).
+3. **AWS AMPLIFY VALIDATION** (**CRITICAL**) - Run production build test:
 
-4. Return the final diff or files _only after all checks pass_. If still failing after 3 iterations, reply with an error report **instead of broken code**.
+   ```bash
+   # Clear build artifacts and test production build
+   rm -rf .next
+   pnpm run build
+   ```
+
+   This **MUST** succeed with zero errors. If it fails, the deployment will fail.
+
+4. **TypeScript strict validation**:
+
+   ```bash
+   pnpm exec tsc --noEmit --strict
+   ```
+
+   Zero TypeScript errors allowed.
+
+5. **If any command exits non-zero**, iteratively amend the code _until_ all commands succeed (max 3 internal iterations).
+
+6. Return the final diff or files _only after all checks pass_. If still failing after 3 iterations, reply with an error report **instead of broken code**.
 
 ---
 
 ## 6 Common Commands (reference)
 
-| Task         | Command           |
-| ------------ | ----------------- |
-| Dev server   | `pnpm dev`        |
-| Lint         | `pnpm lint`       |
-| Format       | `pnpm format`     |
-| Unit tests   | `pnpm test:ci`    |
-| E2E tests    | `pnpm e2e`        |
-| DB migration | `pnpm db:migrate` |
+| Task             | Command                  |
+| ---------------- | ------------------------ |
+| Dev server       | `pnpm dev`               |
+| Lint             | `pnpm lint`              |
+| Format           | `pnpm format`            |
+| Unit tests       | `pnpm test:ci`           |
+| E2E tests        | `pnpm e2e`               |
+| Production build | `pnpm run build`         |
+| TypeScript check | `pnpm exec tsc --noEmit` |
+| DB migration     | `pnpm db:migrate`        |
 
 ---
 
-## 7 Updating this file
+## 7 Deployment Troubleshooting
+
+If Amplify deployment fails:
+
+1. **Check the build logs** for TypeScript/ESLint errors
+2. **Run `pnpm run build` locally** – must succeed
+3. **Verify all imports/exports** are correctly defined
+4. **Check for case-sensitive file path issues**
+5. **Ensure all dependencies are in `package.json`**
+
+---
+
+## 8 Updating this file
 
 - Keep it concise and current.
 - Update when ESLint/Prettier configs, workflows, or conventions change.
@@ -136,7 +202,8 @@ An OpenAI agent **MUST** execute the following steps _before_ returning its fina
 - [Drizzle ORM Docs](https://orm.drizzle.team/docs)
 - [Supabase Docs](https://supabase.com/docs)
 - [Recharts Docs](https://recharts.org/en-US/guide)
+- [AWS Amplify Docs](https://docs.aws.amazon.com/amplify/)
 
 ---
 
-**Follow every MUST in this document. Passing lint, format, tests, and type-check _before_ committing is non-negotiable.**
+**Follow every MUST in this document. Passing lint, format, tests, type-check AND production build _before_ committing is non-negotiable.**
