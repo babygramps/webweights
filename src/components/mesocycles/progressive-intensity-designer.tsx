@@ -91,9 +91,11 @@ export function ProgressiveIntensityDesigner({
     },
   );
 
+  const initialTab: 'chart' | 'template' | 'settings' | 'strategy' =
+    initialProgression ? 'chart' : 'template';
   const [activeTab, setActiveTab] = useState<
     'chart' | 'template' | 'settings' | 'strategy'
-  >('chart');
+  >(initialTab);
   const hasEmittedInitial = React.useRef(false);
 
   // Store original intensities for each week when deload is toggled on
@@ -301,6 +303,7 @@ export function ProgressiveIntensityDesigner({
         setProgressionType(template.type);
         const strategy = getStrategyForTemplate(template);
         setProgressionStrategy(strategy);
+        setActiveTab('chart');
 
         // Emit changes immediately
         createAndEmitProgressionRef.current(newProgressions, template.type);
