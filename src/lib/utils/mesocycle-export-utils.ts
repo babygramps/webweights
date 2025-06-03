@@ -53,11 +53,34 @@ export function generateWorkoutsFromTemplates(
   const workouts: GeneratedWorkout[] = [];
   const exercises: GeneratedExercise[] = [];
 
-  const firstWeekStart = startOfWeek(startDate, { weekStartsOn: 0 });
+  console.log('[generateWorkoutsFromTemplates] Starting generation with:', {
+    startDate: format(startDate, 'yyyy-MM-dd (EEEE)'),
+    weeks,
+    templatesCount: templates.length,
+    templates: templates.map((t) => ({
+      label: t.label,
+      dayOfWeek: t.dayOfWeek,
+      exerciseCount: t.exercises.length,
+    })),
+  });
+
+  const mesocycleStart = new Date(startDate);
+  console.log(
+    '[generateWorkoutsFromTemplates] Mesocycle start:',
+    format(mesocycleStart, 'yyyy-MM-dd (EEEE)'),
+  );
 
   for (let week = 0; week < weeks; week++) {
-    const weekStart = addWeeks(firstWeekStart, week);
     const weekNumber = week + 1;
+    const weekStart = addWeeks(mesocycleStart, week);
+
+    console.log(
+      `[generateWorkoutsFromTemplates] Processing Week ${weekNumber}:`,
+      {
+        weekStart: format(weekStart, 'yyyy-MM-dd (EEEE)'),
+        weekNumber,
+      },
+    );
 
     const weekProgression = progression?.weeklyProgressions?.find(
       (p) => p.week === weekNumber,
@@ -65,8 +88,32 @@ export function generateWorkoutsFromTemplates(
 
     templates.forEach((template) => {
       template.dayOfWeek.forEach((dayOfWeek) => {
-        const workoutDate = addDays(weekStart, dayOfWeek);
-        if (workoutDate >= startDate) {
+        let workoutDate: Date;
+
+        if (week === 0 && dayOfWeek === mesocycleStart.getDay()) {
+          workoutDate = new Date(mesocycleStart);
+        } else {
+          const weekStartSunday = startOfWeek(weekStart, { weekStartsOn: 0 });
+          workoutDate = addDays(weekStartSunday, dayOfWeek);
+
+          if (workoutDate < mesocycleStart) {
+            workoutDate = addWeeks(workoutDate, 1);
+          }
+        }
+
+        const isAfterStart = workoutDate >= mesocycleStart;
+
+        console.log(`[generateWorkoutsFromTemplates] Checking workout date:`, {
+          template: template.label,
+          dayOfWeek,
+          workoutDate: format(workoutDate, 'yyyy-MM-dd (EEEE)'),
+          startDate: format(mesocycleStart, 'yyyy-MM-dd (EEEE)'),
+          isAfterStart,
+          weekNumber,
+          isWeek1: week === 0,
+        });
+
+        if (isAfterStart) {
           const workoutId = crypto.randomUUID();
           workouts.push({
             id: workoutId,
@@ -76,6 +123,13 @@ export function generateWorkoutsFromTemplates(
             week_number: weekNumber,
             intensity_modifier: weekProgression?.intensity,
           });
+
+          console.log(`[generateWorkoutsFromTemplates] ✅ Created workout:`, {
+            date: format(workoutDate, 'yyyy-MM-dd (EEEE)'),
+            label: `${template.label} - Week ${weekNumber}`,
+            weekNumber,
+          });
+
           template.exercises.forEach((exercise) => {
             exercises.push({
               id: crypto.randomUUID(),
@@ -85,10 +139,32 @@ export function generateWorkoutsFromTemplates(
               defaults: exercise.defaults,
             });
           });
+        } else {
+          console.log(
+            `[generateWorkoutsFromTemplates] ❌ Skipped workout (before start):`,
+            {
+              template: template.label,
+              workoutDate: format(workoutDate, 'yyyy-MM-dd (EEEE)'),
+              startDate: format(mesocycleStart, 'yyyy-MM-dd (EEEE)'),
+              weekNumber,
+            },
+          );
         }
       });
     });
   }
+
+  console.log('[generateWorkoutsFromTemplates] Generation complete:', {
+    totalWorkouts: workouts.length,
+    totalExercises: exercises.length,
+    workoutsByWeek: workouts.reduce(
+      (acc, w) => {
+        acc[w.week_number] = (acc[w.week_number] || 0) + 1;
+        return acc;
+      },
+      {} as Record<number, number>,
+    ),
+  });
 
   return { workouts, exercises };
 }
