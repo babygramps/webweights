@@ -25,19 +25,4 @@ applications:
       cache:
         paths:
           - node_modules/**/*
-          - .next/cache/**/*
-    backend:
-      phases:
-        build:
-          commands:
-            - echo "Backend build phase"
-    customHeaders:
-      - pattern: "**/*"
-        headers:
-          - key: "Strict-Transport-Security"
-            value: "max-age=31536000; includeSubDomains"
-    env:
-      variables:
-        DATABASE_URL: $DATABASE_URL
-        NEXT_PUBLIC_SUPABASE_URL: $NEXT_PUBLIC_SUPABASE_URL
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: $NEXT_PUBLIC_SUPABASE_ANON_KEY 
+          - .next/cache/**/* 
