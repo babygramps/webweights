@@ -312,12 +312,6 @@ export function ProgressiveIntensityDesigner({
 
   return (
     <div className="space-y-6">
-      <ProgressionStrategySelector
-        currentStrategy={progressionStrategy}
-        onStrategyChange={setProgressionStrategy}
-        showDemo={true}
-      />
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
