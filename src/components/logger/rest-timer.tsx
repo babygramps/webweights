@@ -5,10 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pause, Play, RotateCcw, Bell } from 'lucide-react';
 
-const DEFAULT_REST_SECONDS = 90;
+const REST_PRESETS = [
+  { label: '1 min', seconds: 60 },
+  { label: '1:30', seconds: 90 },
+  { label: '2 min', seconds: 120 },
+  { label: '3 min', seconds: 180 },
+];
+
+const DEFAULT_PRESET_INDEX = 2; // 2 minutes
 
 export function RestTimer() {
-  const [seconds, setSeconds] = useState(DEFAULT_REST_SECONDS);
+  const [selectedPresetIndex, setSelectedPresetIndex] =
+    useState(DEFAULT_PRESET_INDEX);
+  const [seconds, setSeconds] = useState(
+    REST_PRESETS[DEFAULT_PRESET_INDEX].seconds,
+  );
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [completed, setCompleted] = useState(false);
@@ -45,6 +56,13 @@ export function RestTimer() {
     }
   }, [seconds, running]);
 
+  const handlePresetSelect = (index: number) => {
+    if (running) return; // Don't allow changing preset while timer is running
+    setSelectedPresetIndex(index);
+    setSeconds(REST_PRESETS[index].seconds);
+    setCompleted(false);
+  };
+
   const handleStartPause = () => {
     if (seconds === 0) return;
     setRunning((r) => !r);
@@ -53,7 +71,7 @@ export function RestTimer() {
 
   const handleReset = () => {
     setRunning(false);
-    setSeconds(DEFAULT_REST_SECONDS);
+    setSeconds(REST_PRESETS[selectedPresetIndex].seconds);
     setCompleted(false);
   };
 
@@ -63,7 +81,26 @@ export function RestTimer() {
 
   return (
     <Card className="flex flex-col items-center justify-center p-4 mb-4">
+      {/* Preset Selection */}
+      <div className="flex gap-1 mb-3">
+        {REST_PRESETS.map((preset, index) => (
+          <Button
+            key={preset.label}
+            variant={selectedPresetIndex === index ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handlePresetSelect(index)}
+            disabled={running}
+            className="text-xs px-2 py-1"
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Timer Display */}
       <div className="text-3xl font-mono font-bold mb-2">{timeStr}</div>
+
+      {/* Control Buttons */}
       <div className="flex gap-2">
         <Button
           variant={running ? 'secondary' : 'default'}
