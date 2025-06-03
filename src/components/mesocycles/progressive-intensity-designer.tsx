@@ -27,6 +27,7 @@ import {
   PROGRESSION_TEMPLATES,
   applyProgressionTemplate,
 } from '@/lib/progression-templates';
+import { getStrategyForTemplate } from '@/lib/utils/template-strategy-utils';
 import { ProgressionStrategySelector } from './progression-strategy-selector';
 import {
   ProgressionStrategy,
@@ -90,9 +91,11 @@ export function ProgressiveIntensityDesigner({
     },
   );
 
+  const initialTab: 'chart' | 'template' | 'settings' | 'strategy' =
+    initialProgression ? 'chart' : 'template';
   const [activeTab, setActiveTab] = useState<
     'chart' | 'template' | 'settings' | 'strategy'
-  >('chart');
+  >(initialTab);
   const hasEmittedInitial = React.useRef(false);
 
   // Store original intensities for each week when deload is toggled on
@@ -148,12 +151,12 @@ export function ProgressiveIntensityDesigner({
     }
   }, []); // Empty deps to only run on mount
 
-  // Handle progression type changes (only after initial emission)
+  // Emit changes when progression settings update (after initial emission)
   React.useEffect(() => {
     if (hasEmittedInitial.current) {
       createAndEmitProgressionRef.current(weeklyProgressions);
     }
-  }, [progressionType, weeklyProgressions]);
+  }, [progressionType, progressionStrategy, weeklyProgressions]);
 
   // Current week intensity for the panel
   const currentWeekIntensity = useMemo(() => {
@@ -298,6 +301,9 @@ export function ProgressiveIntensityDesigner({
 
         setWeeklyProgressions(newProgressions);
         setProgressionType(template.type);
+        const strategy = getStrategyForTemplate(template);
+        setProgressionStrategy(strategy);
+        setActiveTab('chart');
 
         // Emit changes immediately
         createAndEmitProgressionRef.current(newProgressions, template.type);
