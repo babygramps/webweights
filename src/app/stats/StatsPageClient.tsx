@@ -19,12 +19,28 @@ interface RecentWorkout {
   totalVolume: number;
 }
 
-interface PersonalRecord {
-  exerciseId: string;
+interface WeightRecord {
   weight: number;
   reps: number;
   date: string;
+}
+
+interface VolumeRecord {
+  volume: number;
+  date: string;
+}
+
+interface RepsRecord {
+  reps: number;
+  date: string;
+}
+
+interface PersonalRecord {
+  exerciseId: string;
   exerciseName: string;
+  maxWeight: WeightRecord | null;
+  maxVolume: VolumeRecord | null;
+  maxReps: RepsRecord | null;
 }
 
 export interface VolumeData {
@@ -117,9 +133,9 @@ export function StatsPageClient({
                 <PRCard
                   key={pr.exerciseId}
                   exerciseName={pr.exerciseName}
-                  weight={pr.weight}
-                  reps={pr.reps}
-                  date={pr.date || new Date()}
+                  maxWeight={pr.maxWeight}
+                  maxVolume={pr.maxVolume}
+                  maxReps={pr.maxReps}
                 />
               ))}
             </div>

@@ -49,7 +49,7 @@ export async function getPersonalRecords(userId: string) {
   console.log(`[stats] Fetching personal records for user: ${userId}`);
 
   try {
-    // 1. Get max weight per exercise for the user
+    // 1. Aggregate max weight for each exercise
     const maxWeights = await db
       .select({
         exerciseId: setsLogged.exerciseId,
@@ -61,19 +61,72 @@ export async function getPersonalRecords(userId: string) {
       .where(eq(mesocycles.userId, userId))
       .groupBy(setsLogged.exerciseId);
 
+    // 2. Aggregate volume and reps per workout for each exercise
+    const workoutAggregates = await db
+      .select({
+        exerciseId: setsLogged.exerciseId,
+        workoutId: setsLogged.workoutId,
+        volume: sql<number>`SUM(${setsLogged.weight} * ${setsLogged.reps})`,
+        totalReps: sql<number>`SUM(${setsLogged.reps})`,
+        date: sql<string>`MAX(${setsLogged.loggedAt})`,
+      })
+      .from(setsLogged)
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(eq(mesocycles.userId, userId))
+      .groupBy(setsLogged.exerciseId, setsLogged.workoutId);
+
     console.log(`[stats] Found max weights for ${maxWeights.length} exercises`);
 
-    if (maxWeights.length === 0) return [];
+    if (maxWeights.length === 0 && workoutAggregates.length === 0) return [];
 
-    // 2. For each, get the set(s) with that max weight
+    const volumeMap = new Map<string, { volume: number; date: Date }>();
+    const repsMap = new Map<string, { reps: number; date: Date }>();
+
+    for (const row of workoutAggregates) {
+      const existingVol = volumeMap.get(row.exerciseId);
+      if (!existingVol || row.volume > existingVol.volume) {
+        volumeMap.set(row.exerciseId, {
+          volume: row.volume,
+          date: new Date(row.date),
+        });
+      }
+
+      const existingReps = repsMap.get(row.exerciseId);
+      if (!existingReps || row.totalReps > existingReps.reps) {
+        repsMap.set(row.exerciseId, {
+          reps: row.totalReps,
+          date: new Date(row.date),
+        });
+      }
+    }
+
+    const exerciseIds = Array.from(
+      new Set([
+        ...maxWeights.map((m) => m.exerciseId),
+        ...workoutAggregates.map((w) => w.exerciseId),
+      ]),
+    );
+
     const prs = await Promise.all(
-      maxWeights.map(
-        async (record: { exerciseId: string; maxWeight: number }) => {
-          const { exerciseId, maxWeight } = record;
+      exerciseIds.map(async (exerciseId) => {
+        const weightRecord = maxWeights.find(
+          (m) => m.exerciseId === exerciseId,
+        );
+
+        let weightSet: {
+          exerciseId: string;
+          weight: number | null;
+          reps: number | null;
+          date: Date | null;
+          exerciseName: string | null;
+        } | null = null;
+
+        if (weightRecord) {
           const [set] = await db
             .select({
               exerciseId: setsLogged.exerciseId,
-              weight: setsLogged.weight,
+              weight: sql<number>`${setsLogged.weight}`,
               reps: setsLogged.reps,
               date: setsLogged.loggedAt,
               exerciseName: exercises.name,
@@ -85,16 +138,26 @@ export async function getPersonalRecords(userId: string) {
                 eq(setsLogged.exerciseId, exerciseId),
                 eq(
                   sql`CAST(${setsLogged.weight} AS DOUBLE PRECISION)`,
-                  Number(maxWeight),
+                  Number(weightRecord.maxWeight),
                 ),
               ),
             )
             .orderBy(desc(setsLogged.loggedAt))
             .limit(1);
 
-          return set;
-        },
-      ),
+          weightSet = set ?? null;
+        }
+        const volumeData = volumeMap.get(exerciseId);
+        const repsData = repsMap.get(exerciseId);
+
+        return {
+          exerciseId,
+          exerciseName: weightSet?.exerciseName ?? '',
+          maxWeight: weightSet,
+          maxVolume: volumeData ?? null,
+          maxReps: repsData ?? null,
+        };
+      }),
     );
 
     console.log(`[stats] Found ${prs.length} personal records`);

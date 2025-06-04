@@ -22,12 +22,28 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import type { VolumeData } from './StatsPageClient';
 
-type PersonalRecord = {
-  exerciseId: string;
+type WeightRecord = {
   weight: number;
   reps: number;
   date: string;
+};
+
+type VolumeRecord = {
+  volume: number;
+  date: string;
+};
+
+type RepsRecord = {
+  reps: number;
+  date: string;
+};
+
+type PersonalRecord = {
+  exerciseId: string;
   exerciseName: string;
+  maxWeight: WeightRecord | null;
+  maxVolume: VolumeRecord | null;
+  maxReps: RepsRecord | null;
 };
 
 type MuscleGroup = {
@@ -165,14 +181,38 @@ export default async function StatsPage() {
       const mappedPersonalRecords: PersonalRecord[] = safePersonalRecords.map(
         (pr) => ({
           exerciseId: pr.exerciseId,
-          weight: pr.weight ? Number(pr.weight) : 0,
-          reps: pr.reps ? Number(pr.reps) : 0,
-          date: pr.date
-            ? typeof pr.date === 'string'
-              ? pr.date
-              : new Date(pr.date).toISOString()
-            : '',
           exerciseName: pr.exerciseName,
+          maxWeight: pr.maxWeight
+            ? {
+                weight: Number(pr.maxWeight.weight) || 0,
+                reps: Number(pr.maxWeight.reps) || 0,
+                date: pr.maxWeight.date
+                  ? typeof pr.maxWeight.date === 'string'
+                    ? pr.maxWeight.date
+                    : new Date(pr.maxWeight.date).toISOString()
+                  : '',
+              }
+            : null,
+          maxVolume: pr.maxVolume
+            ? {
+                volume: Number(pr.maxVolume.volume) || 0,
+                date: pr.maxVolume.date
+                  ? typeof pr.maxVolume.date === 'string'
+                    ? pr.maxVolume.date
+                    : new Date(pr.maxVolume.date).toISOString()
+                  : '',
+              }
+            : null,
+          maxReps: pr.maxReps
+            ? {
+                reps: Number(pr.maxReps.reps) || 0,
+                date: pr.maxReps.date
+                  ? typeof pr.maxReps.date === 'string'
+                    ? pr.maxReps.date
+                    : new Date(pr.maxReps.date).toISOString()
+                  : '',
+              }
+            : null,
         }),
       );
 
@@ -246,9 +286,9 @@ export default async function StatsPage() {
                       <PRCard
                         key={pr.exerciseId}
                         exerciseName={pr.exerciseName}
-                        weight={pr.weight}
-                        reps={pr.reps}
-                        date={pr.date || new Date()}
+                        maxWeight={pr.maxWeight}
+                        maxVolume={pr.maxVolume}
+                        maxReps={pr.maxReps}
                       />
                     ))}
                 </div>
