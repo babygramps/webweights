@@ -19,6 +19,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { format } from 'date-fns';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface ExerciseProgressData {
   date: Date | string;
@@ -41,6 +42,8 @@ export function ExerciseProgressChart({
   data,
   showVolume = true,
 }: ExerciseProgressChartProps) {
+  const { weightUnit } = useUserPreferences();
+
   console.log(
     `[ExerciseProgressChart] Rendering chart for ${exerciseName} with ${data.length} data points`,
   );
@@ -74,8 +77,8 @@ export function ExerciseProgressChart({
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value}
-              {entry.dataKey === 'weight' && ' lbs'}
-              {entry.dataKey === 'volume' && ' lbs'}
+              {entry.dataKey === 'weight' && ` ${weightUnit}`}
+              {entry.dataKey === 'volume' && ` ${weightUnit}`}
             </p>
           ))}
           {payloadData.intensity && (
@@ -106,7 +109,7 @@ export function ExerciseProgressChart({
             <YAxis
               yAxisId="left"
               label={{
-                value: 'Weight (lbs)',
+                value: `Weight (${weightUnit})`,
                 angle: -90,
                 position: 'insideLeft',
                 className: 'text-xs',
@@ -174,7 +177,7 @@ export function ExerciseProgressChart({
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Max Weight</p>
             <p className="text-lg font-semibold">
-              {Math.max(...data.map((d) => d.weight))} lbs
+              {Math.max(...data.map((d) => d.weight))} {weightUnit}
             </p>
           </div>
           <div className="text-center">
@@ -186,7 +189,7 @@ export function ExerciseProgressChart({
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Max Volume</p>
             <p className="text-lg font-semibold">
-              {Math.max(...data.map((d) => d.volume))} lbs
+              {Math.max(...data.map((d) => d.volume))} {weightUnit}
             </p>
           </div>
           <div className="text-center">

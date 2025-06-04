@@ -21,6 +21,7 @@ import { StatsCard } from './StatsCard';
 import { Trophy, TrendingUp, Dumbbell, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
+import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface Exercise {
   id: string;
@@ -43,6 +44,7 @@ interface ExerciseStatsProps {
 }
 
 export function ExerciseStats({ exercises }: ExerciseStatsProps) {
+  const { weightUnit, convertWeight } = useUserPreferences();
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [progressData, setProgressData] = useState<ExerciseProgressData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -87,15 +89,21 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
 
   const selectedExerciseData = exercises.find((e) => e.id === selectedExercise);
 
-  // Calculate stats from progress data
+  // Calculate stats from progress data with proper unit conversion
   const stats =
     progressData.length > 0
       ? {
-          maxWeight: Math.max(...progressData.map((d) => d.weight)),
+          maxWeight: Math.max(
+            ...progressData.map((d) => convertWeight(d.weight)),
+          ),
           maxReps: Math.max(...progressData.map((d) => d.reps)),
-          maxVolume: Math.max(...progressData.map((d) => d.volume)),
+          maxVolume: Math.max(
+            ...progressData.map((d) => convertWeight(d.volume)),
+          ),
           totalSets: progressData.length,
-          recentWeight: progressData[progressData.length - 1]?.weight || 0,
+          recentWeight: convertWeight(
+            progressData[progressData.length - 1]?.weight || 0,
+          ),
           recentReps: progressData[progressData.length - 1]?.reps || 0,
           firstSet: progressData[0]?.date
             ? new Date(progressData[0].date)
@@ -178,7 +186,7 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatsCard
                       title="Max Weight"
-                      value={`${stats?.maxWeight} lbs`}
+                      value={`${stats?.maxWeight} ${weightUnit}`}
                       description="Personal record"
                       icon={Trophy}
                     />
@@ -220,7 +228,7 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                             Last Weight
                           </p>
                           <p className="text-2xl font-bold">
-                            {stats?.recentWeight} lbs
+                            {stats?.recentWeight} {weightUnit}
                           </p>
                         </div>
                         <div>
@@ -239,7 +247,11 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                 <TabsContent value="progress">
                   <ExerciseProgressChart
                     exerciseName={selectedExerciseData.name}
-                    data={progressData}
+                    data={progressData.map((d) => ({
+                      ...d,
+                      weight: convertWeight(d.weight),
+                      volume: convertWeight(d.volume),
+                    }))}
                     showVolume={true}
                   />
                 </TabsContent>
