@@ -297,6 +297,46 @@ export async function getWorkoutCompletionRate(
   }
 }
 
+// Get workout completion rate grouped by week
+export async function getWeeklyCompletionData(userId: string, months = 3) {
+  logger.log(
+    `[stats] Fetching weekly completion for user: ${userId}, months: ${months}`,
+  );
+
+  try {
+    const startDate = subMonths(new Date(), months).toISOString().split('T')[0];
+
+    const weekExpr = sql<string>`date_trunc('week', ${workouts.scheduledFor})`;
+
+    const data = await db
+      .select({
+        week: weekExpr,
+        totalWorkouts: sql<number>`count(distinct ${workouts.id})`,
+        completedWorkouts: sql<number>`count(distinct case when ${setsLogged.id} is not null then ${workouts.id} end)`,
+      })
+      .from(workouts)
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .leftJoin(setsLogged, eq(setsLogged.workoutId, workouts.id))
+      .where(
+        and(
+          eq(mesocycles.userId, userId),
+          gte(workouts.scheduledFor, startDate),
+        ),
+      )
+      .groupBy(weekExpr)
+      .orderBy(weekExpr);
+
+    return data.map((d) => ({
+      ...d,
+      completionRate:
+        d.totalWorkouts > 0 ? (d.completedWorkouts / d.totalWorkouts) * 100 : 0,
+    }));
+  } catch (error) {
+    logger.error('[stats] Error fetching weekly completion:', error);
+    throw error;
+  }
+}
+
 // Get exercise progress over time (for specific exercise)
 export async function getExerciseProgress(
   userId: string,

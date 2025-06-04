@@ -45,6 +45,7 @@ export default async function StatsPage() {
       muscleDistribution={muscleDistribution}
       completionRate={data.completionRate}
       userExercises={data.userExercises}
+      weeklyCompletion={data.weeklyCompletion}
       totalVolume={totalVolume}
       avgSetsPerWorkout={avgSetsPerWorkout}
     />

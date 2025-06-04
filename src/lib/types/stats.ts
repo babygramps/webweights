@@ -70,3 +70,10 @@ export interface RawPersonalRecord {
   maxVolume?: { volume: number; date: string | Date } | null;
   maxReps?: { reps: number; date: string | Date } | null;
 }
+
+export interface WeeklyCompletion {
+  week: string;
+  completedWorkouts: number;
+  totalWorkouts: number;
+  completionRate: number;
+}
