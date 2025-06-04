@@ -23,6 +23,7 @@ import type {
   MuscleGroup,
   CompletionRate,
   UserExercise,
+  WeeklyCompletion,
 } from '@/lib/types/stats';
 
 interface StatsPageClientProps {
@@ -32,6 +33,7 @@ interface StatsPageClientProps {
   muscleDistribution: MuscleGroup[];
   completionRate: CompletionRate;
   userExercises: UserExercise[];
+  weeklyCompletion: WeeklyCompletion[];
   totalVolume: number;
   avgSetsPerWorkout: number;
 }
@@ -52,6 +54,7 @@ export function StatsPageClient({
   muscleDistribution,
   completionRate,
   userExercises,
+  weeklyCompletion,
   totalVolume,
   avgSetsPerWorkout,
 }: StatsPageClientProps) {
@@ -78,6 +81,11 @@ export function StatsPageClient({
   const filteredVolumeData = useMemo(
     () => volumeData.filter((d) => isDateInRange(d.date, dateRange)),
     [volumeData, dateRange],
+  );
+
+  const filteredWeeklyCompletion = useMemo(
+    () => weeklyCompletion.filter((d) => isDateInRange(d.week, dateRange)),
+    [weeklyCompletion, dateRange],
   );
 
   const filteredMuscleDistribution = useMemo(() => {
@@ -265,6 +273,20 @@ export function StatsPageClient({
               dataKey="totalVolume"
             />
           </div>
+
+          <ProgressChart
+            title="Weekly Adherence"
+            description="Completion rate by week"
+            data={filteredWeeklyCompletion.map((d) => ({
+              date: d.week,
+              adherence: Number(d.completionRate) || 0,
+            }))}
+            dataKey="adherence"
+            xAxisKey="date"
+            yAxisLabel="Completion %"
+            chartType="line"
+            color="#10b981"
+          />
 
           {/* Sets & Intensity Trends */}
           <ProgressChart

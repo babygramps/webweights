@@ -4,6 +4,7 @@ import {
   getVolumeProgressData,
   getMuscleGroupDistribution,
   getWorkoutCompletionRate,
+  getWeeklyCompletionData,
   getUserExercises,
 } from '@/db/queries/stats';
 import { logger } from '@/lib/logger';
@@ -12,6 +13,7 @@ import type {
   RecentWorkout,
   UserExercise,
   VolumeData,
+  WeeklyCompletion,
 } from '@/lib/types/stats';
 
 export interface StatsData {
@@ -21,6 +23,7 @@ export interface StatsData {
   muscleDistribution: unknown[];
   completionRate: CompletionRate;
   userExercises: UserExercise[];
+  weeklyCompletion: WeeklyCompletion[];
 }
 
 export async function fetchStats(userId: string): Promise<StatsData> {
@@ -30,6 +33,7 @@ export async function fetchStats(userId: string): Promise<StatsData> {
     volumeData,
     muscleDistribution,
     completionRate,
+    weeklyCompletion,
     userExercises,
   ] = await Promise.allSettled([
     getRecentWorkouts(userId, 5),
@@ -37,6 +41,7 @@ export async function fetchStats(userId: string): Promise<StatsData> {
     getVolumeProgressData(userId),
     getMuscleGroupDistribution(userId),
     getWorkoutCompletionRate(userId),
+    getWeeklyCompletionData(userId),
     getUserExercises(userId),
   ]);
 
@@ -56,5 +61,6 @@ export async function fetchStats(userId: string): Promise<StatsData> {
       completionRate: 0,
     } as CompletionRate),
     userExercises: safe(userExercises, [] as UserExercise[]),
+    weeklyCompletion: safe(weeklyCompletion, [] as WeeklyCompletion[]),
   };
 }
