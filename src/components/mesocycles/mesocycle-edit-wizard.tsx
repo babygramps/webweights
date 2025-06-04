@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -121,7 +122,7 @@ export function MesocycleEditWizard({
     },
   });
 
-  console.log('[MesocycleWizard] Current step:', currentStep);
+  logger.log('[MesocycleWizard] Current step:', currentStep);
 
   useEffect(() => {
     const loadData = async () => {
@@ -176,7 +177,7 @@ export function MesocycleEditWizard({
       // Validate basic info before proceeding
       form.trigger(['title', 'weeks', 'startDate']).then((isValid) => {
         if (isValid) {
-          console.log('[MesocycleWizard] Moving to workout design step');
+          logger.log('[MesocycleWizard] Moving to workout design step');
           setCurrentStep(currentStep + 1);
         }
       });
@@ -217,7 +218,7 @@ export function MesocycleEditWizard({
       };
     }> = [];
 
-    console.log('[MesocycleWizard] Generating workouts from templates:', {
+    logger.log('[MesocycleWizard] Generating workouts from templates:', {
       templatesCount: templates.length,
       startDate: format(startDate, 'yyyy-MM-dd'),
       weeks,
@@ -267,7 +268,7 @@ export function MesocycleEditWizard({
               });
             });
 
-            console.log('[MesocycleWizard] Generated workout:', {
+            logger.log('[MesocycleWizard] Generated workout:', {
               date: format(workoutDate, 'yyyy-MM-dd EEEE'),
               label: `${template.label} - Week ${weekNumber}`,
               exerciseCount: template.exercises.length,
@@ -282,7 +283,7 @@ export function MesocycleEditWizard({
   };
   const onSubmit = async (data: MesocycleFormData) => {
     setSaving(true);
-    console.log('[MesocycleEditWizard] Saving mesocycle:', data);
+    logger.log('[MesocycleEditWizard] Saving mesocycle:', data);
     const supabase = createClient();
 
     const { error } = await supabase
@@ -295,7 +296,7 @@ export function MesocycleEditWizard({
       .eq('id', mesocycleId);
 
     if (error) {
-      console.error('[MesocycleEditWizard] Failed to update mesocycle:', error);
+      logger.error('[MesocycleEditWizard] Failed to update mesocycle:', error);
       toast.error('Failed to save mesocycle');
       setSaving(false);
       return;
@@ -316,7 +317,7 @@ export function MesocycleEditWizard({
           global_settings: progression.globalSettings,
         });
       if (progressionError) {
-        console.error(
+        logger.error(
           '[MesocycleEditWizard] Error saving progression:',
           progressionError,
         );
@@ -330,7 +331,7 @@ export function MesocycleEditWizard({
           .delete()
           .eq('mesocycle_id', mesocycleId);
         if (delError) {
-          console.error(
+          logger.error(
             '[MesocycleEditWizard] Error deleting workouts:',
             delError,
           );
@@ -349,7 +350,7 @@ export function MesocycleEditWizard({
           .from('workouts')
           .insert(workouts);
         if (workoutsError) {
-          console.error(
+          logger.error(
             '[MesocycleEditWizard] Error creating workouts:',
             workoutsError,
           );
@@ -361,7 +362,7 @@ export function MesocycleEditWizard({
           .from('workout_exercises')
           .insert(exercises);
         if (exercisesError) {
-          console.error(
+          logger.error(
             '[MesocycleEditWizard] Error creating workout exercises:',
             exercisesError,
           );

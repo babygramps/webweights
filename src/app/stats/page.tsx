@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase/server';
@@ -55,8 +56,8 @@ type MuscleGroup = {
 
 export default async function StatsPage() {
   // Add comprehensive logging for debugging production issues
-  console.log('🔍 [StatsPage] Starting page load');
-  console.log('Environment Debug:', {
+  logger.log('🔍 [StatsPage] Starting page load');
+  logger.log('Environment Debug:', {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL_SET: !!process.env.DATABASE_URL,
     DATABASE_URL_LENGTH: process.env.DATABASE_URL?.length || 0,
@@ -69,22 +70,22 @@ export default async function StatsPage() {
 
   try {
     const supabase = await createClient();
-    console.log('✅ [StatsPage] Supabase client created successfully');
+    logger.log('✅ [StatsPage] Supabase client created successfully');
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.log('❌ [StatsPage] No authenticated user, redirecting');
+      logger.log('❌ [StatsPage] No authenticated user, redirecting');
       redirect('/');
     }
 
-    console.log(`✅ [StatsPage] Loading stats for user: ${user.id}`);
+    logger.log(`✅ [StatsPage] Loading stats for user: ${user.id}`);
 
     // Test database connection with error handling
     try {
-      console.log('🔍 [StatsPage] Testing database connection...');
+      logger.log('🔍 [StatsPage] Testing database connection...');
 
       // Fetch all stats data with individual error handling
       const [
@@ -104,7 +105,7 @@ export default async function StatsPage() {
       ]);
 
       // Log results of each query
-      console.log('📊 [StatsPage] Query results:', {
+      logger.log('📊 [StatsPage] Query results:', {
         recentWorkouts: recentWorkouts.status,
         personalRecords: personalRecords.status,
         volumeData: volumeData.status,
@@ -124,7 +125,7 @@ export default async function StatsPage() {
       ].filter(({ result }) => result.status === 'rejected');
 
       if (failedQueries.length > 0) {
-        console.error(
+        logger.error(
           '❌ [StatsPage] Failed queries:',
           failedQueries.map(({ name, result }) => ({
             name,
@@ -156,7 +157,7 @@ export default async function StatsPage() {
       const safeUserExercises =
         userExercises.status === 'fulfilled' ? userExercises.value : [];
 
-      console.log(
+      logger.log(
         `✅ [StatsPage] Successfully loaded ${safePersonalRecords.length} PRs, ${safeVolumeData.length} volume data points`,
       );
 
@@ -415,8 +416,8 @@ export default async function StatsPage() {
         </div>
       );
     } catch (dbError) {
-      console.error('❌ [StatsPage] Database operation failed:', dbError);
-      console.error(
+      logger.error('❌ [StatsPage] Database operation failed:', dbError);
+      logger.error(
         'Stack trace:',
         dbError instanceof Error ? dbError.stack : 'No stack trace available',
       );
@@ -462,8 +463,8 @@ export default async function StatsPage() {
       );
     }
   } catch (error) {
-    console.error('❌ [StatsPage] Page load failed:', error);
-    console.error(
+    logger.error('❌ [StatsPage] Page load failed:', error);
+    logger.error(
       'Stack trace:',
       error instanceof Error ? error.stack : 'No stack trace available',
     );

@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import {
@@ -62,7 +63,7 @@ export function EditSetDialog({
   const [myoRepCount, setMyoRepCount] = useState(set.myoRepCount || 0);
   const [partialCount, setPartialCount] = useState(set.partialCount || 0);
 
-  console.log(`[EditSetDialog] Editing set ${set.id}`);
+  logger.log(`[EditSetDialog] Editing set ${set.id}`);
 
   const handleSave = () => {
     const weightNum = parseFloat(weight);
@@ -88,7 +89,7 @@ export function EditSetDialog({
       partialCount: isPartial ? partialCount : 0,
     };
 
-    console.log('[EditSetDialog] Saving updated set:', updatedSet);
+    logger.log('[EditSetDialog] Saving updated set:', updatedSet);
     onSave(updatedSet);
     onOpenChange(false);
   };

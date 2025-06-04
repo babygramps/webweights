@@ -85,19 +85,11 @@ export function MuscleGroupChart({
 }: MuscleGroupChartProps) {
   const { convertWeight } = useUserPreferences();
 
-  console.log(
-    `[MuscleGroupChart] Rendering chart with ${data.length} muscle groups`,
-  );
-
   // Filter out invalid data and calculate percentages
   const validData = data.filter((item) => {
     const value = item[dataKey];
     return value != null && !isNaN(value) && value > 0;
   });
-
-  console.log(
-    `[MuscleGroupChart] Found ${validData.length} valid muscle groups after filtering`,
-  );
 
   if (validData.length === 0) {
     return (
@@ -124,18 +116,12 @@ export function MuscleGroupChart({
     return sum + (value || 0);
   }, 0);
 
-  console.log(`[MuscleGroupChart] Total ${dataKey}: ${total}`);
-
   const chartData: MuscleGroupData[] = validData.map((item) => {
     let value = item[dataKey] || 0;
     if (dataKey === 'totalVolume') {
       value = convertWeight(value);
     }
     const percentage = total > 0 ? (value / total) * 100 : 0;
-
-    console.log(
-      `[MuscleGroupChart] ${item.primaryMuscle}: ${value}, ${percentage.toFixed(1)}%`,
-    );
 
     return {
       ...item,

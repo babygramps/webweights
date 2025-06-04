@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -81,7 +82,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
 
   const fetchWorkout = useCallback(async () => {
     try {
-      console.log('Fetching workout:', workoutId);
+      logger.log('Fetching workout:', workoutId);
       const supabase = createClient();
 
       const { data, error } = await supabase
@@ -99,11 +100,11 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         .single();
 
       if (error) {
-        console.error('Error fetching workout:', error);
+        logger.error('Error fetching workout:', error);
         throw error;
       }
 
-      console.log('Fetched workout:', data);
+      logger.log('Fetched workout:', data);
       setWorkout(data);
 
       // Select first exercise by default
@@ -115,7 +116,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         setSelectedExercise(sortedExercises[0]);
       }
     } catch (err) {
-      console.error('Failed to fetch workout:', err);
+      logger.error('Failed to fetch workout:', err);
       toast.error('Failed to load workout');
     } finally {
       setLoading(false);
@@ -124,7 +125,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
 
   const fetchLoggedSets = useCallback(async () => {
     try {
-      console.log('Fetching logged sets for workout:', workoutId);
+      logger.log('Fetching logged sets for workout:', workoutId);
       const supabase = createClient();
 
       const { data, error } = await supabase
@@ -134,14 +135,14 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         .order('logged_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching logged sets:', error);
+        logger.error('Error fetching logged sets:', error);
         throw error;
       }
 
-      console.log('Fetched logged sets:', data);
+      logger.log('Fetched logged sets:', data);
       setLoggedSets(data || []);
     } catch (err) {
-      console.error('Failed to fetch logged sets:', err);
+      logger.error('Failed to fetch logged sets:', err);
     }
   }, [workoutId]);
 
@@ -163,7 +164,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     };
 
     try {
-      console.log('Logging set:', newSet);
+      logger.log('Logging set:', newSet);
       const supabase = createClient();
 
       const { data, error } = await supabase
@@ -173,15 +174,15 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         .single();
 
       if (error) {
-        console.error('Error logging set:', error);
+        logger.error('Error logging set:', error);
         throw error;
       }
 
-      console.log('Logged set successfully:', data);
+      logger.log('Logged set successfully:', data);
       setLoggedSets([...loggedSets, data]);
       toast.success('Set logged!');
     } catch (err) {
-      console.error('Failed to log set:', err);
+      logger.error('Failed to log set:', err);
       toast.error('Failed to log set');
     }
   };
@@ -190,7 +191,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     if (!workout) return;
 
     try {
-      console.log('Adding exercises to workout:', exerciseIds);
+      logger.log('Adding exercises to workout:', exerciseIds);
       const supabase = createClient();
 
       let orderIdx =
@@ -211,17 +212,17 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
           },
         });
         if (error) {
-          console.error('Error adding exercise:', error);
+          logger.error('Error adding exercise:', error);
           throw error;
         }
       }
 
-      console.log('Added exercises successfully');
+      logger.log('Added exercises successfully');
       toast.success('Exercise(s) added!');
       setIsAddingExercise(false);
       fetchWorkout();
     } catch (err) {
-      console.error('Failed to add exercise:', err);
+      logger.error('Failed to add exercise:', err);
       toast.error('Failed to add exercise');
     }
   };
@@ -233,7 +234,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
       toast.success('Workout completed!');
       router.push('/dashboard');
     } catch (err) {
-      console.error('Failed to finish workout:', err);
+      logger.error('Failed to finish workout:', err);
       toast.error('Failed to complete workout');
     } finally {
       setIsSaving(false);
@@ -253,7 +254,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
       partialCount?: number;
     },
   ) => {
-    console.log(`Updating set ${setId} with:`, updates);
+    logger.log(`Updating set ${setId} with:`, updates);
 
     try {
       const supabase = createClient();
@@ -274,21 +275,21 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         .single();
 
       if (error) {
-        console.error('Error updating set:', error);
+        logger.error('Error updating set:', error);
         throw error;
       }
 
-      console.log('Set updated successfully:', data);
+      logger.log('Set updated successfully:', data);
       // Refresh the sets
       await fetchLoggedSets();
     } catch (error) {
-      console.error('Failed to update set:', error);
+      logger.error('Failed to update set:', error);
       throw error;
     }
   };
 
   const handleDeleteSet = async (setId: string) => {
-    console.log(`Deleting set ${setId}`);
+    logger.log(`Deleting set ${setId}`);
 
     try {
       const supabase = createClient();
@@ -298,15 +299,15 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         .eq('id', setId);
 
       if (error) {
-        console.error('Error deleting set:', error);
+        logger.error('Error deleting set:', error);
         throw error;
       }
 
-      console.log('Set deleted successfully');
+      logger.log('Set deleted successfully');
       // Refresh the sets
       await fetchLoggedSets();
     } catch (error) {
-      console.error('Failed to delete set:', error);
+      logger.error('Failed to delete set:', error);
       throw error;
     }
   };

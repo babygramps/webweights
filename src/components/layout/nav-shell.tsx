@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -73,7 +74,7 @@ export function NavShell({ children, user }: NavShellProps) {
       router.push('/');
       toast.success('Signed out successfully');
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
       toast.error('Failed to sign out');
     }
   };

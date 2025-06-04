@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import {
@@ -175,7 +176,7 @@ export function WorkoutTemplateDesigner({
     );
   };
 
-  console.log(
+  logger.log(
     '[WorkoutTemplateDesigner] Rendering with',
     templates.length,
     'templates',
@@ -188,7 +189,7 @@ export function WorkoutTemplateDesigner({
       dayOfWeek: [],
       exercises: [],
     };
-    console.log('[WorkoutTemplateDesigner] Adding new template:', newTemplate);
+    logger.log('[WorkoutTemplateDesigner] Adding new template:', newTemplate);
     onTemplatesChange((prev) => [...prev, newTemplate]);
   };
 
@@ -196,7 +197,7 @@ export function WorkoutTemplateDesigner({
     templateId: string,
     updates: Partial<WorkoutTemplate>,
   ) => {
-    console.log(
+    logger.log(
       '[WorkoutTemplateDesigner] Updating template:',
       templateId,
       updates,
@@ -207,7 +208,7 @@ export function WorkoutTemplateDesigner({
   };
 
   const deleteTemplate = (templateId: string) => {
-    console.log('[WorkoutTemplateDesigner] Deleting template:', templateId);
+    logger.log('[WorkoutTemplateDesigner] Deleting template:', templateId);
     onTemplatesChange((prev) => prev.filter((t) => t.id !== templateId));
   };
 
@@ -217,7 +218,7 @@ export function WorkoutTemplateDesigner({
       id: crypto.randomUUID(),
       label: `${template.label} (Copy)`,
     };
-    console.log('[WorkoutTemplateDesigner] Duplicating template:', newTemplate);
+    logger.log('[WorkoutTemplateDesigner] Duplicating template:', newTemplate);
     onTemplatesChange((prev) => [...prev, newTemplate]);
   };
 
@@ -247,7 +248,7 @@ export function WorkoutTemplateDesigner({
   };
 
   const removeExercise = (templateId: string, exerciseIndex: number) => {
-    console.log(
+    logger.log(
       '[WorkoutTemplateDesigner] Removing exercise:',
       templateId,
       exerciseIndex,
@@ -267,7 +268,7 @@ export function WorkoutTemplateDesigner({
   };
 
   const toggleDayOfWeek = (templateId: string, day: number) => {
-    console.log(
+    logger.log(
       '[WorkoutTemplateDesigner] Toggling day for template:',
       templateId,
       day,
@@ -288,7 +289,7 @@ export function WorkoutTemplateDesigner({
     exerciseIndex: number,
     updates: Partial<WorkoutExerciseTemplate>,
   ) => {
-    console.log(
+    logger.log(
       '[WorkoutTemplateDesigner] Updating exercise:',
       templateId,
       exerciseIndex,

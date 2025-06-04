@@ -1,7 +1,8 @@
+import logger from '@/lib/logger';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  console.log('🔍 [Debug API] Environment check requested');
+  logger.log('🔍 [Debug API] Environment check requested');
 
   const envInfo = {
     timestamp: new Date().toISOString(),
@@ -50,7 +51,7 @@ export async function GET() {
     ALL_ENV_KEYS: Object.keys(process.env).sort(),
   };
 
-  console.log('🔍 [Debug API] Environment info:', envInfo);
+  logger.log('🔍 [Debug API] Environment info:', envInfo);
 
   return NextResponse.json(envInfo, {
     headers: {

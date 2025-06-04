@@ -89,10 +89,6 @@ export function ProgressChart({
 }: ProgressChartProps) {
   const { weightUnit, convertWeight } = useUserPreferences();
 
-  console.log(
-    `[ProgressChart] Rendering ${chartType} chart for ${title} with ${data.length} data points`,
-  );
-
   const Chart = chartType === 'line' ? LineChart : BarChart;
   const DataComponent = chartType === 'line' ? Line : Bar;
 

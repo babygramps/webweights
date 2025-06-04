@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,7 +109,7 @@ export function IntensityChart({
         : DELOAD_INTENSITY;
 
       onUpdateWeek(weekNumber, newIntensity, !isCurrentlyDeload);
-      console.log(`Toggled deload for week ${weekNumber}:`, !isCurrentlyDeload);
+      logger.log(`Toggled deload for week ${weekNumber}:`, !isCurrentlyDeload);
     },
     [weeklyProgressions, onUpdateWeek],
   );
@@ -124,7 +125,7 @@ export function IntensityChart({
         onUpdateLabel(week, 'Deload Week');
       }
     }
-    console.log('Auto-applied deloads every 4th week');
+    logger.log('Auto-applied deloads every 4th week');
   }, [weeks, weeklyProgressions, onUpdateWeek, onUpdateLabel]);
 
   const renderChart = useCallback(

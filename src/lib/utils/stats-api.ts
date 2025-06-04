@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 interface ExerciseProgressData {
   date: Date | string;
   weight: number;
@@ -10,21 +11,21 @@ interface ExerciseProgressData {
 export async function fetchExerciseProgressData(
   exerciseId: string,
 ): Promise<ExerciseProgressData[]> {
-  console.log(
+  logger.log(
     `[fetchExerciseProgressData] Starting request for exercise: ${exerciseId}`,
   );
 
   try {
     // Validate input
     if (!exerciseId || typeof exerciseId !== 'string') {
-      console.error(
+      logger.error(
         '[fetchExerciseProgressData] Invalid exerciseId:',
         exerciseId,
       );
       throw new Error('Invalid exercise ID provided');
     }
 
-    console.log('[fetchExerciseProgressData] Making API request...');
+    logger.log('[fetchExerciseProgressData] Making API request...');
     const response = await fetch('/api/stats/exercise-progress', {
       method: 'POST',
       headers: {
@@ -33,13 +34,13 @@ export async function fetchExerciseProgressData(
       body: JSON.stringify({ exerciseId }),
     });
 
-    console.log(
+    logger.log(
       `[fetchExerciseProgressData] API response status: ${response.status}`,
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error(
+      logger.error(
         '[fetchExerciseProgressData] API error response:',
         errorData,
       );
@@ -56,12 +57,12 @@ export async function fetchExerciseProgressData(
     }
 
     const result = await response.json();
-    console.log(
+    logger.log(
       `[fetchExerciseProgressData] Successfully received ${result.data?.length || 0} data points`,
     );
 
     if (!result.data || !Array.isArray(result.data)) {
-      console.error(
+      logger.error(
         '[fetchExerciseProgressData] Invalid response format:',
         result,
       );
@@ -70,8 +71,8 @@ export async function fetchExerciseProgressData(
 
     return result.data;
   } catch (error) {
-    console.error('[fetchExerciseProgressData] Error occurred:', error);
-    console.error('[fetchExerciseProgressData] Error details:', {
+    logger.error('[fetchExerciseProgressData] Error occurred:', error);
+    logger.error('[fetchExerciseProgressData] Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : 'No stack available',
       exerciseId,

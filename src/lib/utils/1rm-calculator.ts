@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 /**
  * 1RM Calculator utilities
  * Implements various formulas for estimating one-rep max
@@ -70,17 +71,12 @@ export function calculate1RM(
   reps: number,
   formula: OneRMFormula = epleyFormula,
 ): number {
-  console.log(
-    `[1RM] Calculating with ${formula.name} formula: ${weight}lbs x ${reps} reps`,
-  );
-
   if (weight <= 0 || reps <= 0) {
-    console.warn('[1RM] Invalid input: weight and reps must be positive');
+    logger.warn('[1RM] Invalid input: weight and reps must be positive');
     return 0;
   }
 
   const result = formula.calculate(weight, reps);
-  console.log(`[1RM] Result: ${result}lbs`);
 
   return result;
 }
@@ -89,16 +85,12 @@ export function calculate1RM(
  * Calculate average 1RM across all formulas
  */
 export function calculateAverage1RM(weight: number, reps: number): number {
-  console.log(`[1RM] Calculating average across all formulas`);
-
   const results = oneRMFormulas.map((formula) =>
     formula.calculate(weight, reps),
   );
   const average = Math.round(
     results.reduce((sum, val) => sum + val, 0) / results.length,
   );
-
-  console.log(`[1RM] Average: ${average}lbs (from ${results.join(', ')})`);
 
   return average;
 }
