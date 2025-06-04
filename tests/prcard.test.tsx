@@ -15,8 +15,8 @@ describe('PRCard', () => {
       <PRCard
         exerciseName="Bench"
         maxWeight={{ weight: 100, reps: 1, date: '2024-01-01' }}
-        maxVolume={{ weight: 80, reps: 10, date: '2024-02-01' }}
-        maxReps={{ weight: 60, reps: 12, date: '2024-03-01' }}
+        maxVolume={{ volume: 800, date: '2024-02-01' }}
+        maxReps={{ reps: 20, date: '2024-03-01' }}
       />,
     );
 

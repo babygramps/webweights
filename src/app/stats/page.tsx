@@ -22,8 +22,18 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import type { VolumeData } from './StatsPageClient';
 
-type RecordData = {
+type WeightRecord = {
   weight: number;
+  reps: number;
+  date: string;
+};
+
+type VolumeRecord = {
+  volume: number;
+  date: string;
+};
+
+type RepsRecord = {
   reps: number;
   date: string;
 };
@@ -31,9 +41,9 @@ type RecordData = {
 type PersonalRecord = {
   exerciseId: string;
   exerciseName: string;
-  maxWeight: RecordData;
-  maxVolume: RecordData;
-  maxReps: RecordData;
+  maxWeight: WeightRecord | null;
+  maxVolume: VolumeRecord | null;
+  maxReps: RepsRecord | null;
 };
 
 type MuscleGroup = {
@@ -172,33 +182,37 @@ export default async function StatsPage() {
         (pr) => ({
           exerciseId: pr.exerciseId,
           exerciseName: pr.exerciseName,
-          maxWeight: {
-            weight: Number(pr.maxWeight?.weight) || 0,
-            reps: Number(pr.maxWeight?.reps) || 0,
-            date: pr.maxWeight?.date
-              ? typeof pr.maxWeight.date === 'string'
-                ? pr.maxWeight.date
-                : new Date(pr.maxWeight.date).toISOString()
-              : '',
-          },
-          maxVolume: {
-            weight: Number(pr.maxVolume?.weight) || 0,
-            reps: Number(pr.maxVolume?.reps) || 0,
-            date: pr.maxVolume?.date
-              ? typeof pr.maxVolume.date === 'string'
-                ? pr.maxVolume.date
-                : new Date(pr.maxVolume.date).toISOString()
-              : '',
-          },
-          maxReps: {
-            weight: Number(pr.maxReps?.weight) || 0,
-            reps: Number(pr.maxReps?.reps) || 0,
-            date: pr.maxReps?.date
-              ? typeof pr.maxReps.date === 'string'
-                ? pr.maxReps.date
-                : new Date(pr.maxReps.date).toISOString()
-              : '',
-          },
+          maxWeight: pr.maxWeight
+            ? {
+                weight: Number(pr.maxWeight.weight) || 0,
+                reps: Number(pr.maxWeight.reps) || 0,
+                date: pr.maxWeight.date
+                  ? typeof pr.maxWeight.date === 'string'
+                    ? pr.maxWeight.date
+                    : new Date(pr.maxWeight.date).toISOString()
+                  : '',
+              }
+            : null,
+          maxVolume: pr.maxVolume
+            ? {
+                volume: Number(pr.maxVolume.volume) || 0,
+                date: pr.maxVolume.date
+                  ? typeof pr.maxVolume.date === 'string'
+                    ? pr.maxVolume.date
+                    : new Date(pr.maxVolume.date).toISOString()
+                  : '',
+              }
+            : null,
+          maxReps: pr.maxReps
+            ? {
+                reps: Number(pr.maxReps.reps) || 0,
+                date: pr.maxReps.date
+                  ? typeof pr.maxReps.date === 'string'
+                    ? pr.maxReps.date
+                    : new Date(pr.maxReps.date).toISOString()
+                  : '',
+              }
+            : null,
         }),
       );
 

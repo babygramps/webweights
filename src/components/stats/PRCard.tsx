@@ -7,17 +7,27 @@ import { format } from 'date-fns';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 import { useState, useRef } from 'react';
 
-interface RecordData {
+interface WeightRecord {
   weight: number;
+  reps: number;
+  date: Date | string;
+}
+
+interface VolumeRecord {
+  volume: number;
+  date: Date | string;
+}
+
+interface RepsRecord {
   reps: number;
   date: Date | string;
 }
 
 interface PRCardProps {
   exerciseName: string;
-  maxWeight: RecordData;
-  maxVolume: RecordData;
-  maxReps: RecordData;
+  maxWeight: WeightRecord | null;
+  maxVolume: VolumeRecord | null;
+  maxReps: RepsRecord | null;
   isNew?: boolean;
 }
 
@@ -58,7 +68,8 @@ export function PRCard({
     startX.current = null;
   };
 
-  const renderContent = (data: RecordData) => {
+  const renderWeight = (data: WeightRecord | null) => {
+    if (!data) return <p className="text-sm">No data</p>;
     const parsedDate =
       typeof data.date === 'string' ? new Date(data.date) : data.date;
     const formattedDate = format(parsedDate, 'PPP');
@@ -80,6 +91,44 @@ export function PRCard({
             New Personal Record!
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderVolume = (data: VolumeRecord | null) => {
+    if (!data) return <p className="text-sm">No data</p>;
+    const parsedDate =
+      typeof data.date === 'string' ? new Date(data.date) : data.date;
+    const formattedDate = format(parsedDate, 'PPP');
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-2xl font-bold">
+            {convertWeight(data.volume)} {weightUnit}
+          </span>
+        </div>
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4 mr-1" />
+          {formattedDate}
+        </div>
+      </div>
+    );
+  };
+
+  const renderReps = (data: RepsRecord | null) => {
+    if (!data) return <p className="text-sm">No data</p>;
+    const parsedDate =
+      typeof data.date === 'string' ? new Date(data.date) : data.date;
+    const formattedDate = format(parsedDate, 'PPP');
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-2xl font-bold">{data.reps} reps</span>
+        </div>
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Calendar className="h-4 w-4 mr-1" />
+          {formattedDate}
+        </div>
       </div>
     );
   };
@@ -110,12 +159,12 @@ export function PRCard({
             <TabsTrigger value="reps">Reps</TabsTrigger>
           </TabsList>
           <TabsContent value="weight">
-            {renderContent(records.weight)}
+            {renderWeight(records.weight)}
           </TabsContent>
           <TabsContent value="volume">
-            {renderContent(records.volume)}
+            {renderVolume(records.volume)}
           </TabsContent>
-          <TabsContent value="reps">{renderContent(records.reps)}</TabsContent>
+          <TabsContent value="reps">{renderReps(records.reps)}</TabsContent>
         </Tabs>
       </CardContent>
     </Card>

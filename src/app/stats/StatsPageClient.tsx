@@ -19,8 +19,18 @@ interface RecentWorkout {
   totalVolume: number;
 }
 
-interface RecordData {
+interface WeightRecord {
   weight: number;
+  reps: number;
+  date: string;
+}
+
+interface VolumeRecord {
+  volume: number;
+  date: string;
+}
+
+interface RepsRecord {
   reps: number;
   date: string;
 }
@@ -28,9 +38,9 @@ interface RecordData {
 interface PersonalRecord {
   exerciseId: string;
   exerciseName: string;
-  maxWeight: RecordData;
-  maxVolume: RecordData;
-  maxReps: RecordData;
+  maxWeight: WeightRecord | null;
+  maxVolume: VolumeRecord | null;
+  maxReps: RepsRecord | null;
 }
 
 export interface VolumeData {

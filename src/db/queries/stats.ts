@@ -49,13 +49,11 @@ export async function getPersonalRecords(userId: string) {
   console.log(`[stats] Fetching personal records for user: ${userId}`);
 
   try {
-    // 1. Aggregate max stats per exercise
-    const maxStats = await db
+    // 1. Aggregate max weight for each exercise
+    const maxWeights = await db
       .select({
         exerciseId: setsLogged.exerciseId,
         maxWeight: sql<number>`MAX(${setsLogged.weight})`,
-        maxVolume: sql<number>`MAX(${setsLogged.weight} * ${setsLogged.reps})`,
-        maxReps: sql<number>`MAX(${setsLogged.reps})`,
       })
       .from(setsLogged)
       .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
@@ -63,81 +61,103 @@ export async function getPersonalRecords(userId: string) {
       .where(eq(mesocycles.userId, userId))
       .groupBy(setsLogged.exerciseId);
 
-    console.log(`[stats] Found stats for ${maxStats.length} exercises`);
+    // 2. Aggregate volume and reps per workout for each exercise
+    const workoutAggregates = await db
+      .select({
+        exerciseId: setsLogged.exerciseId,
+        workoutId: setsLogged.workoutId,
+        volume: sql<number>`SUM(${setsLogged.weight} * ${setsLogged.reps})`,
+        totalReps: sql<number>`SUM(${setsLogged.reps})`,
+        date: sql<string>`MAX(${setsLogged.loggedAt})`,
+      })
+      .from(setsLogged)
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(eq(mesocycles.userId, userId))
+      .groupBy(setsLogged.exerciseId, setsLogged.workoutId);
 
-    if (maxStats.length === 0) return [];
+    console.log(`[stats] Found max weights for ${maxWeights.length} exercises`);
 
-    // 2. For each exercise, get sets corresponding to each record
+    if (maxWeights.length === 0 && workoutAggregates.length === 0) return [];
+
+    const volumeMap = new Map<string, { volume: number; date: Date }>();
+    const repsMap = new Map<string, { reps: number; date: Date }>();
+
+    for (const row of workoutAggregates) {
+      const existingVol = volumeMap.get(row.exerciseId);
+      if (!existingVol || row.volume > existingVol.volume) {
+        volumeMap.set(row.exerciseId, {
+          volume: row.volume,
+          date: new Date(row.date),
+        });
+      }
+
+      const existingReps = repsMap.get(row.exerciseId);
+      if (!existingReps || row.totalReps > existingReps.reps) {
+        repsMap.set(row.exerciseId, {
+          reps: row.totalReps,
+          date: new Date(row.date),
+        });
+      }
+    }
+
+    const exerciseIds = Array.from(
+      new Set([
+        ...maxWeights.map((m) => m.exerciseId),
+        ...workoutAggregates.map((w) => w.exerciseId),
+      ]),
+    );
+
     const prs = await Promise.all(
-      maxStats.map(
-        async (record: {
-          exerciseId: string;
-          maxWeight: number;
-          maxVolume: number;
-          maxReps: number;
-        }) => {
-          const { exerciseId, maxWeight, maxVolume, maxReps } = record;
+      exerciseIds.map(async (exerciseId) => {
+        const weightRecord = maxWeights.find(
+          (m) => m.exerciseId === exerciseId,
+        );
 
-          const baseQuery = db
+        let weightSet: {
+          exerciseId: string;
+          weight: number | null;
+          reps: number | null;
+          date: Date | null;
+          exerciseName: string | null;
+        } | null = null;
+
+        if (weightRecord) {
+          const [set] = await db
             .select({
               exerciseId: setsLogged.exerciseId,
-              weight: setsLogged.weight,
+              weight: sql<number>`${setsLogged.weight}`,
               reps: setsLogged.reps,
               date: setsLogged.loggedAt,
               exerciseName: exercises.name,
             })
             .from(setsLogged)
-            .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id));
-
-          const [weightSet] = await baseQuery
+            .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
             .where(
               and(
                 eq(setsLogged.exerciseId, exerciseId),
                 eq(
                   sql`CAST(${setsLogged.weight} AS DOUBLE PRECISION)`,
-                  Number(maxWeight),
+                  Number(weightRecord.maxWeight),
                 ),
               ),
             )
             .orderBy(desc(setsLogged.loggedAt))
             .limit(1);
 
-          const [volumeSet] = await baseQuery
-            .where(
-              and(
-                eq(setsLogged.exerciseId, exerciseId),
-                eq(
-                  sql`CAST(${setsLogged.weight} * ${setsLogged.reps} AS DOUBLE PRECISION)`,
-                  Number(maxVolume),
-                ),
-              ),
-            )
-            .orderBy(desc(setsLogged.loggedAt))
-            .limit(1);
+          weightSet = set ?? null;
+        }
+        const volumeData = volumeMap.get(exerciseId);
+        const repsData = repsMap.get(exerciseId);
 
-          const [repsSet] = await baseQuery
-            .where(
-              and(
-                eq(setsLogged.exerciseId, exerciseId),
-                eq(setsLogged.reps, maxReps),
-              ),
-            )
-            .orderBy(desc(setsLogged.loggedAt))
-            .limit(1);
-
-          return {
-            exerciseId,
-            exerciseName:
-              weightSet?.exerciseName ??
-              volumeSet?.exerciseName ??
-              repsSet?.exerciseName ??
-              '',
-            maxWeight: weightSet,
-            maxVolume: volumeSet,
-            maxReps: repsSet,
-          };
-        },
-      ),
+        return {
+          exerciseId,
+          exerciseName: weightSet?.exerciseName ?? '',
+          maxWeight: weightSet,
+          maxVolume: volumeData ?? null,
+          maxReps: repsData ?? null,
+        };
+      }),
     );
 
     console.log(`[stats] Found ${prs.length} personal records`);
