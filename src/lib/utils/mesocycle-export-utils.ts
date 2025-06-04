@@ -187,7 +187,7 @@ export function generateMesocycleExport(
     basics: {
       title: basics.title,
       weeks: basics.weeks,
-      startDate: format(basics.startDate, 'yyyy-MM-dd'),
+      startDate: basics.startDate.toISOString().split('T')[0],
     },
     workoutTemplates: templates,
     progression: progression || undefined,
