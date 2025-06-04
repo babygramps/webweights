@@ -89,15 +89,61 @@ export function MuscleGroupChart({
     `[MuscleGroupChart] Rendering chart with ${data.length} muscle groups`,
   );
 
-  // Calculate percentages
-  const total = data.reduce((sum, item) => sum + item[dataKey], 0);
-  const chartData: MuscleGroupData[] = data.map((item) => ({
-    ...item,
-    name: item.primaryMuscle || 'Other',
-    value:
-      dataKey === 'totalVolume' ? convertWeight(item[dataKey]) : item[dataKey],
-    percentage: ((item[dataKey] / total) * 100).toFixed(1),
-  }));
+  // Filter out invalid data and calculate percentages
+  const validData = data.filter((item) => {
+    const value = item[dataKey];
+    return value != null && !isNaN(value) && value > 0;
+  });
+
+  console.log(
+    `[MuscleGroupChart] Found ${validData.length} valid muscle groups after filtering`,
+  );
+
+  if (validData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <p>No training data available yet</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Calculate percentages with proper null handling
+  const total = validData.reduce((sum, item) => {
+    let value = item[dataKey];
+    if (dataKey === 'totalVolume') {
+      value = convertWeight(value || 0);
+    }
+    return sum + (value || 0);
+  }, 0);
+
+  console.log(`[MuscleGroupChart] Total ${dataKey}: ${total}`);
+
+  const chartData: MuscleGroupData[] = validData.map((item) => {
+    let value = item[dataKey] || 0;
+    if (dataKey === 'totalVolume') {
+      value = convertWeight(value);
+    }
+    const percentage = total > 0 ? (value / total) * 100 : 0;
+
+    console.log(
+      `[MuscleGroupChart] ${item.primaryMuscle}: ${value}, ${percentage.toFixed(1)}%`,
+    );
+
+    return {
+      ...item,
+      name: item.primaryMuscle || 'Other',
+      value,
+      percentage: percentage.toFixed(1),
+    };
+  });
 
   return (
     <Card>
