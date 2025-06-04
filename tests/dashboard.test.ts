@@ -16,11 +16,14 @@ import {
 
 let selectMock: Mock;
 vi.mock('@/db/queries/stats');
-vi.mock('@/db/index', () => ({
-  db: { select: (selectMock = vi.fn()) },
-  mesocycles: {},
-  workouts: {},
-}));
+vi.mock('@/db/index', () => {
+  selectMock = vi.fn();
+  return {
+    db: { select: selectMock },
+    mesocycles: {},
+    workouts: {},
+  };
+});
 
 type QueryResult = Record<string, unknown>[];
 function createSelect(result: QueryResult) {

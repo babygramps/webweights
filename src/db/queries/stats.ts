@@ -49,11 +49,13 @@ export async function getPersonalRecords(userId: string) {
   console.log(`[stats] Fetching personal records for user: ${userId}`);
 
   try {
-    // 1. Get max weight per exercise for the user
-    const maxWeights = await db
+    // 1. Aggregate max stats per exercise
+    const maxStats = await db
       .select({
         exerciseId: setsLogged.exerciseId,
         maxWeight: sql<number>`MAX(${setsLogged.weight})`,
+        maxVolume: sql<number>`MAX(${setsLogged.weight} * ${setsLogged.reps})`,
+        maxReps: sql<number>`MAX(${setsLogged.reps})`,
       })
       .from(setsLogged)
       .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
@@ -61,16 +63,22 @@ export async function getPersonalRecords(userId: string) {
       .where(eq(mesocycles.userId, userId))
       .groupBy(setsLogged.exerciseId);
 
-    console.log(`[stats] Found max weights for ${maxWeights.length} exercises`);
+    console.log(`[stats] Found stats for ${maxStats.length} exercises`);
 
-    if (maxWeights.length === 0) return [];
+    if (maxStats.length === 0) return [];
 
-    // 2. For each, get the set(s) with that max weight
+    // 2. For each exercise, get sets corresponding to each record
     const prs = await Promise.all(
-      maxWeights.map(
-        async (record: { exerciseId: string; maxWeight: number }) => {
-          const { exerciseId, maxWeight } = record;
-          const [set] = await db
+      maxStats.map(
+        async (record: {
+          exerciseId: string;
+          maxWeight: number;
+          maxVolume: number;
+          maxReps: number;
+        }) => {
+          const { exerciseId, maxWeight, maxVolume, maxReps } = record;
+
+          const baseQuery = db
             .select({
               exerciseId: setsLogged.exerciseId,
               weight: setsLogged.weight,
@@ -79,7 +87,9 @@ export async function getPersonalRecords(userId: string) {
               exerciseName: exercises.name,
             })
             .from(setsLogged)
-            .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
+            .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id));
+
+          const [weightSet] = await baseQuery
             .where(
               and(
                 eq(setsLogged.exerciseId, exerciseId),
@@ -92,7 +102,40 @@ export async function getPersonalRecords(userId: string) {
             .orderBy(desc(setsLogged.loggedAt))
             .limit(1);
 
-          return set;
+          const [volumeSet] = await baseQuery
+            .where(
+              and(
+                eq(setsLogged.exerciseId, exerciseId),
+                eq(
+                  sql`CAST(${setsLogged.weight} * ${setsLogged.reps} AS DOUBLE PRECISION)`,
+                  Number(maxVolume),
+                ),
+              ),
+            )
+            .orderBy(desc(setsLogged.loggedAt))
+            .limit(1);
+
+          const [repsSet] = await baseQuery
+            .where(
+              and(
+                eq(setsLogged.exerciseId, exerciseId),
+                eq(setsLogged.reps, maxReps),
+              ),
+            )
+            .orderBy(desc(setsLogged.loggedAt))
+            .limit(1);
+
+          return {
+            exerciseId,
+            exerciseName:
+              weightSet?.exerciseName ??
+              volumeSet?.exerciseName ??
+              repsSet?.exerciseName ??
+              '',
+            maxWeight: weightSet,
+            maxVolume: volumeSet,
+            maxReps: repsSet,
+          };
         },
       ),
     );
