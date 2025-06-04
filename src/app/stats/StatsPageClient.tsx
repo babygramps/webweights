@@ -6,10 +6,14 @@ import { ProgressChart } from '@/components/stats/ProgressChart';
 import { MuscleGroupChart } from '@/components/stats/MuscleGroupChart';
 import { OneRMCalculator } from '@/components/stats/OneRMCalculator';
 import { ExerciseStats } from '@/components/stats/ExerciseStats';
+import { StatsFilters } from '@/components/stats/StatsFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
 import { format } from 'date-fns';
+import { useState, useMemo } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
+import { isDateInRange, filterPersonalRecords } from '@/lib/utils/stats-filter';
 import type {
   RecentWorkout,
   PersonalRecord,
@@ -41,6 +45,49 @@ export function StatsPageClient({
   avgSetsPerWorkout,
 }: StatsPageClientProps) {
   const { weightUnit, convertWeight } = useUserPreferences();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [selectedExercise, setSelectedExercise] = useState<
+    string | undefined
+  >();
+  const [selectedMuscle, setSelectedMuscle] = useState<string | undefined>();
+
+  const muscleGroups = useMemo(
+    () => Array.from(new Set(muscleDistribution.map((m) => m.primaryMuscle))),
+    [muscleDistribution],
+  );
+
+  const filteredRecentWorkouts = useMemo(
+    () => recentWorkouts.filter((w) => isDateInRange(w.workoutDate, dateRange)),
+    [recentWorkouts, dateRange],
+  );
+
+  const filteredVolumeData = useMemo(
+    () => volumeData.filter((d) => isDateInRange(d.date, dateRange)),
+    [volumeData, dateRange],
+  );
+
+  const filteredMuscleDistribution = useMemo(() => {
+    return muscleDistribution.filter((m) =>
+      selectedMuscle ? m.primaryMuscle === selectedMuscle : true,
+    );
+  }, [muscleDistribution, selectedMuscle]);
+
+  const filteredPersonalRecords = useMemo(
+    () =>
+      filterPersonalRecords(personalRecords, {
+        range: dateRange,
+        exerciseId: selectedExercise,
+        muscle: selectedMuscle,
+        userExercises,
+      }),
+    [
+      personalRecords,
+      selectedExercise,
+      selectedMuscle,
+      userExercises,
+      dateRange,
+    ],
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -50,6 +97,14 @@ export function StatsPageClient({
           Track your progress and analyze your training patterns
         </p>
       </div>
+
+      <StatsFilters
+        onDateRangeChange={setDateRange}
+        onExerciseChange={setSelectedExercise}
+        onMuscleGroupChange={setSelectedMuscle}
+        exercises={userExercises.map((ex) => ({ id: ex.id, name: ex.name }))}
+        muscleGroups={muscleGroups}
+      />
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
@@ -92,7 +147,7 @@ export function StatsPageClient({
           <div>
             <h2 className="text-2xl font-bold mb-4">Personal Records</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {personalRecords.slice(0, 6).map((pr) => (
+              {filteredPersonalRecords.slice(0, 6).map((pr) => (
                 <PRCard
                   key={pr.exerciseId}
                   exerciseName={pr.exerciseName}
@@ -108,7 +163,7 @@ export function StatsPageClient({
           <div>
             <h2 className="text-2xl font-bold mb-4">Recent Workouts</h2>
             <div className="space-y-3">
-              {recentWorkouts.map((workout) => (
+              {filteredRecentWorkouts.map((workout) => (
                 <div
                   key={workout.workoutId}
                   className="p-4 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -161,7 +216,7 @@ export function StatsPageClient({
             <ProgressChart
               title="Volume Progress"
               description="Total training volume over time"
-              data={volumeData.map((d) => ({
+              data={filteredVolumeData.map((d) => ({
                 date: d.date,
                 volume: Number(d.totalVolume) || 0,
               }))}
@@ -174,7 +229,7 @@ export function StatsPageClient({
             />
 
             <MuscleGroupChart
-              data={muscleDistribution}
+              data={filteredMuscleDistribution}
               title="Training Focus"
               description="Volume distribution by muscle group"
               dataKey="totalVolume"
@@ -185,7 +240,7 @@ export function StatsPageClient({
           <ProgressChart
             title="Training Frequency"
             description="Number of sets performed over time"
-            data={volumeData.map((d) => ({
+            data={filteredVolumeData.map((d) => ({
               date: d.date,
               sets: Number(d.totalSets) || 0,
             }))}
