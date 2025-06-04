@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import {
@@ -51,25 +52,17 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
   const [error, setError] = useState<string | null>(null);
 
   const handleExerciseChange = async (exerciseId: string) => {
-    console.log(`[ExerciseStats] Exercise selected: ${exerciseId}`);
     setSelectedExercise(exerciseId);
     setError(null);
 
     if (exerciseId) {
       setLoading(true);
       try {
-        console.log(
-          `[ExerciseStats] Fetching data for exercise: ${exerciseId}`,
-        );
-
         const data = await fetchExerciseProgressData(exerciseId);
-        console.log(
-          `[ExerciseStats] Loaded ${data.length} progress data points`,
-        );
         setProgressData(data || []);
       } catch (error) {
-        console.error('[ExerciseStats] Error loading exercise data:', error);
-        console.error('[ExerciseStats] Error details:', {
+        logger.error('[ExerciseStats] Error loading exercise data:', error);
+        logger.error('[ExerciseStats] Error details:', {
           message: error instanceof Error ? error.message : 'Unknown error',
           stack: error instanceof Error ? error.stack : 'No stack available',
           exerciseId,

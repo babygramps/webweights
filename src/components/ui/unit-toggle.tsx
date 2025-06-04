@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +19,7 @@ export function UnitToggle() {
       toast.success(`Units changed to ${newUnit}`);
     } catch (error) {
       toast.error('Failed to update units');
-      console.error('Error updating units:', error);
+      logger.error('Error updating units:', error);
     }
   };
 

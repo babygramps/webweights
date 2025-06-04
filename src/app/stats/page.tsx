@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 import { redirect } from 'next/navigation';
@@ -20,6 +21,7 @@ export default async function StatsPage() {
 
   if (!user) {
     redirect('/');
+
   }
 
   logger.info(`[StatsPage] Loading stats for user ${user.id}`);

@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { ProgressionStrategy } from '@/types/progression-strategy';
 import { WeekIntensity, DEFAULT_INTENSITY } from '@/types/progression';
 import { WorkoutExerciseTemplate } from '@/components/mesocycles/workout-template-designer';
@@ -14,7 +15,7 @@ export type ExerciseDefaults = {
 
 // Helper function to apply reps modifier to rep strings like "8-10"
 function applyRepsModifier(reps: string, modifier: number): string {
-  console.log('[applyRepsModifier] Input:', { reps, modifier });
+  logger.log('[applyRepsModifier] Input:', { reps, modifier });
 
   if (modifier === 1.0) return reps;
 
@@ -46,7 +47,7 @@ export function applyProgressionStrategyToExercise(
   progressionStrategy?: ProgressionStrategy,
   exerciseType?: 'compound' | 'isolation' | 'accessory',
 ): EnhancedExerciseDefaults {
-  console.log('[applyProgressionStrategyToExercise] Input:', {
+  logger.log('[applyProgressionStrategyToExercise] Input:', {
     exerciseName: exercise.exerciseName,
     weekIntensity,
     progressionStrategy,
@@ -202,7 +203,7 @@ export function applyProgressionStrategyToExercise(
     intensityDescription: changes.length > 0 ? changes.join(' • ') : undefined,
   };
 
-  console.log('[applyProgressionStrategyToExercise] Result:', result);
+  logger.log('[applyProgressionStrategyToExercise] Result:', result);
 
   return result;
 }

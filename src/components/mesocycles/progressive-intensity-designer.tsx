@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +74,7 @@ export function ProgressiveIntensityDesigner({
     initialProgression?.progressionType || 'linear',
   );
 
-  console.log('[ProgressiveIntensityDesigner] Rendering with:', {
+  logger.log('[ProgressiveIntensityDesigner] Rendering with:', {
     mesocycleWeeks,
     hasProgression: !!initialProgression,
     progressionType: progressionType,
@@ -230,7 +231,7 @@ export function ProgressiveIntensityDesigner({
           });
         }
         const sortedUpdated = updated.sort((a, b) => a.week - b.week);
-        console.log('[ProgressiveIntensityDesigner] handleUpdateWeek', {
+        logger.log('[ProgressiveIntensityDesigner] handleUpdateWeek', {
           weekNumber,
           intensity: nextIntensity,
           isDeload,
@@ -308,9 +309,9 @@ export function ProgressiveIntensityDesigner({
         // Emit changes immediately
         createAndEmitProgressionRef.current(newProgressions, template.type);
 
-        console.log(`Applied template: ${template.name}`);
+        logger.log(`Applied template: ${template.name}`);
       } catch (error) {
-        console.error('Error applying template:', error);
+        logger.error('Error applying template:', error);
       }
     },
     [mesocycleWeeks, createAndEmitProgressionRef],
@@ -399,7 +400,7 @@ export function ProgressiveIntensityDesigner({
               <ProgressionStrategySelector
                 currentStrategy={progressionStrategy}
                 onStrategyChange={(newStrategy) => {
-                  console.log(
+                  logger.log(
                     '[ProgressiveIntensityDesigner] Strategy changed:',
                     newStrategy,
                   );

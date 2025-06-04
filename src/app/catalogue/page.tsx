@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -33,7 +34,7 @@ export default function CataloguePage() {
 
   const fetchExercises = async () => {
     try {
-      console.log('Fetching exercises from database...');
+      logger.log('Fetching exercises from database...');
       const supabase = createClient();
       const { data, error } = await supabase
         .from('exercises')
@@ -42,14 +43,14 @@ export default function CataloguePage() {
         .order('name');
 
       if (error) {
-        console.error('Error fetching exercises:', error);
+        logger.error('Error fetching exercises:', error);
         throw error;
       }
 
-      console.log('Fetched exercises:', data);
+      logger.log('Fetched exercises:', data);
       setExercises(data || []);
     } catch (err) {
-      console.error('Failed to fetch exercises:', err);
+      logger.error('Failed to fetch exercises:', err);
       setError('Failed to load exercises. Please try again later.');
     } finally {
       setLoading(false);
@@ -86,17 +87,17 @@ export default function CataloguePage() {
   }, [exercises, searchTerm, filters]);
 
   const handleTypeChange = (type: string | null) => {
-    console.log('Type filter changed to:', type);
+    logger.log('Type filter changed to:', type);
     setFilters((prev) => ({ ...prev, type }));
   };
 
   const handleMuscleChange = (muscle: string | null) => {
-    console.log('Muscle filter changed to:', muscle);
+    logger.log('Muscle filter changed to:', muscle);
     setFilters((prev) => ({ ...prev, muscle }));
   };
 
   const handleTagChange = (tag: string | null) => {
-    console.log('Tag filter changed to:', tag);
+    logger.log('Tag filter changed to:', tag);
     setFilters((prev) => ({ ...prev, tag }));
   };
 

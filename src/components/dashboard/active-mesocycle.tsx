@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -51,14 +52,14 @@ export function ActiveMesocycle() {
 
   const fetchActiveMesocycle = async () => {
     try {
-      console.log('Fetching active mesocycle...');
+      logger.log('Fetching active mesocycle...');
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
-        console.log('No user found');
+        logger.log('No user found');
         setLoading(false);
         return;
       }
@@ -86,11 +87,11 @@ export function ActiveMesocycle() {
       if (error) {
         if (error.code === 'PGRST116') {
           // No mesocycles found - this is expected for new users
-          console.log('No mesocycles found for user');
+          logger.log('No mesocycles found for user');
           setMesocycle(null);
           return;
         } else {
-          console.error('Error fetching mesocycle:', {
+          logger.error('Error fetching mesocycle:', {
             code: error.code,
             message: error.message,
             details: error.details,
@@ -100,7 +101,7 @@ export function ActiveMesocycle() {
           throw error;
         }
       } else {
-        console.log('Fetched mesocycle:', mesocycles);
+        logger.log('Fetched mesocycle:', mesocycles);
 
         // Try to fetch progression data separately if mesocycle exists
         if (mesocycles?.id) {
@@ -113,15 +114,15 @@ export function ActiveMesocycle() {
 
             if (!progressionError && progressions) {
               mesocycles.mesocycle_progressions = progressions;
-              console.log('Fetched progressions:', progressions);
+              logger.log('Fetched progressions:', progressions);
             } else if (progressionError) {
-              console.log(
+              logger.log(
                 'No progressions found or table does not exist:',
                 progressionError,
               );
             }
           } catch (progressionErr) {
-            console.log(
+            logger.log(
               'Progression fetch failed (this is optional):',
               progressionErr,
             );
@@ -133,7 +134,7 @@ export function ActiveMesocycle() {
         // Get upcoming workouts (next 7 days)
         if (mesocycles?.workouts) {
           const today = startOfDay(new Date());
-          console.log(
+          logger.log(
             '[ActiveMesocycle] Current local date:',
             format(today, 'yyyy-MM-dd EEEE'),
           );
@@ -142,7 +143,7 @@ export function ActiveMesocycle() {
             .filter((workout: Workout) => {
               const workoutDate = parseLocalDate(workout.scheduled_for);
               const workoutDay = startOfDay(workoutDate);
-              console.log(
+              logger.log(
                 `[ActiveMesocycle] Workout "${workout.label}" scheduled for:`,
                 format(workoutDay, 'yyyy-MM-dd EEEE'),
               );
@@ -156,13 +157,13 @@ export function ActiveMesocycle() {
             )
             .slice(0, 3);
 
-          console.log('[ActiveMesocycle] Upcoming workouts:', upcoming);
+          logger.log('[ActiveMesocycle] Upcoming workouts:', upcoming);
           setUpcomingWorkouts(upcoming);
         }
       }
     } catch (err: unknown) {
       const error = err as Error;
-      console.error('Failed to fetch mesocycle:', {
+      logger.error('Failed to fetch mesocycle:', {
         name: error?.name,
         message: error?.message,
         stack: error?.stack,

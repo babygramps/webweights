@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -111,14 +112,14 @@ export function MesocycleWizard() {
     },
   });
 
-  console.log('[MesocycleWizard] Current step:', currentStep);
+  logger.log('[MesocycleWizard] Current step:', currentStep);
 
   const nextStep = () => {
     if (currentStep === 0) {
       // Validate basic info before proceeding
       form.trigger(['title', 'weeks', 'startDate']).then((isValid) => {
         if (isValid) {
-          console.log('[MesocycleWizard] Moving to workout design step');
+          logger.log('[MesocycleWizard] Moving to workout design step');
           setCurrentStep(currentStep + 1);
         }
       });
@@ -134,9 +135,9 @@ export function MesocycleWizard() {
   const onSubmit = async (data: MesocycleFormData) => {
     try {
       setSaving(true);
-      console.log('[MesocycleWizard] Submitting mesocycle:', data);
-      console.log('[MesocycleWizard] Workout templates:', workoutTemplates);
-      console.log('[MesocycleWizard] Progression:', progression);
+      logger.log('[MesocycleWizard] Submitting mesocycle:', data);
+      logger.log('[MesocycleWizard] Workout templates:', workoutTemplates);
+      logger.log('[MesocycleWizard] Progression:', progression);
 
       const supabase = createClient();
       const {
@@ -160,14 +161,14 @@ export function MesocycleWizard() {
         .single();
 
       if (mesocycleError) {
-        console.error(
+        logger.error(
           '[MesocycleWizard] Error creating mesocycle:',
           mesocycleError,
         );
         throw mesocycleError;
       }
 
-      console.log('[MesocycleWizard] Created mesocycle:', mesocycle);
+      logger.log('[MesocycleWizard] Created mesocycle:', mesocycle);
 
       // Save progression if configured
       if (progression) {
@@ -185,13 +186,13 @@ export function MesocycleWizard() {
           .insert(progressionData);
 
         if (progressionError) {
-          console.error(
+          logger.error(
             '[MesocycleWizard] Error saving progression:',
             progressionError,
           );
           // Don't throw here - progression is optional
         } else {
-          console.log('[MesocycleWizard] Saved progression data');
+          logger.log('[MesocycleWizard] Saved progression data');
         }
       }
 
@@ -212,14 +213,14 @@ export function MesocycleWizard() {
             .insert(workouts);
 
           if (workoutsError) {
-            console.error(
+            logger.error(
               '[MesocycleWizard] Error creating workouts:',
               workoutsError,
             );
             throw workoutsError;
           }
 
-          console.log('[MesocycleWizard] Created', workouts.length, 'workouts');
+          logger.log('[MesocycleWizard] Created', workouts.length, 'workouts');
         }
 
         // Insert workout exercises
@@ -229,14 +230,14 @@ export function MesocycleWizard() {
             .insert(exercises);
 
           if (exercisesError) {
-            console.error(
+            logger.error(
               '[MesocycleWizard] Error creating workout exercises:',
               exercisesError,
             );
             throw exercisesError;
           }
 
-          console.log(
+          logger.log(
             '[MesocycleWizard] Created',
             exercises.length,
             'workout exercises',
@@ -247,7 +248,7 @@ export function MesocycleWizard() {
       toast.success('Mesocycle created successfully!');
       router.push('/dashboard');
     } catch (error) {
-      console.error('[MesocycleWizard] Error:', error);
+      logger.error('[MesocycleWizard] Error:', error);
       toast.error('Failed to create mesocycle');
     } finally {
       setSaving(false);

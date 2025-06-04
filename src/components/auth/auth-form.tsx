@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -38,7 +39,7 @@ export function AuthForm() {
       toast.success('Check your email for the magic link!');
       setEmail('');
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       toast.error('Failed to send magic link. Please try again.');
     } finally {
       setIsLoading(false);

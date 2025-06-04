@@ -40,30 +40,24 @@ export function StatsFilters({
   >();
   const [selectedMuscle, setSelectedMuscle] = useState<string | undefined>();
 
-  console.log('[StatsFilters] Rendering with', exercises.length, 'exercises');
-
   const handleDateRangeChange = (range: DateRange | undefined) => {
-    console.log('[StatsFilters] Date range changed:', range);
     setDateRange(range);
     onDateRangeChange?.(range);
   };
 
   const handleExerciseChange = (value: string) => {
-    console.log('[StatsFilters] Exercise changed:', value);
     const exerciseId = value === 'all' ? undefined : value;
     setSelectedExercise(exerciseId);
     onExerciseChange?.(exerciseId);
   };
 
   const handleMuscleGroupChange = (value: string) => {
-    console.log('[StatsFilters] Muscle group changed:', value);
     const muscle = value === 'all' ? undefined : value;
     setSelectedMuscle(muscle);
     onMuscleGroupChange?.(muscle);
   };
 
   const handleReset = () => {
-    console.log('[StatsFilters] Resetting all filters');
     setDateRange(undefined);
     setSelectedExercise(undefined);
     setSelectedMuscle(undefined);

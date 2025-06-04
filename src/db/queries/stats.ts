@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { db } from '../index';
 import { setsLogged, workouts, exercises, mesocycles } from '../schema';
 import { eq, desc, and, gte, sql, SQL } from 'drizzle-orm';
@@ -5,7 +6,7 @@ import { subMonths } from 'date-fns';
 
 // Get recent workouts for a user
 export async function getRecentWorkouts(userId: string, limit = 10) {
-  console.log(
+  logger.log(
     `[stats] Fetching recent workouts for user: ${userId}, limit: ${limit}`,
   );
 
@@ -36,17 +37,17 @@ export async function getRecentWorkouts(userId: string, limit = 10) {
       .orderBy(desc(workouts.scheduledFor))
       .limit(limit);
 
-    console.log(`[stats] Found ${recentWorkouts.length} recent workouts`);
+    logger.log(`[stats] Found ${recentWorkouts.length} recent workouts`);
     return recentWorkouts;
   } catch (error) {
-    console.error('[stats] Error fetching recent workouts:', error);
+    logger.error('[stats] Error fetching recent workouts:', error);
     throw error;
   }
 }
 
 // Get personal records for each exercise
 export async function getPersonalRecords(userId: string) {
-  console.log(`[stats] Fetching personal records for user: ${userId}`);
+  logger.log(`[stats] Fetching personal records for user: ${userId}`);
 
   try {
     // 1. Aggregate max weight for each exercise
@@ -76,7 +77,7 @@ export async function getPersonalRecords(userId: string) {
       .where(eq(mesocycles.userId, userId))
       .groupBy(setsLogged.exerciseId, setsLogged.workoutId);
 
-    console.log(`[stats] Found max weights for ${maxWeights.length} exercises`);
+    logger.log(`[stats] Found max weights for ${maxWeights.length} exercises`);
 
     if (maxWeights.length === 0 && workoutAggregates.length === 0) return [];
 
@@ -160,10 +161,10 @@ export async function getPersonalRecords(userId: string) {
       }),
     );
 
-    console.log(`[stats] Found ${prs.length} personal records`);
+    logger.log(`[stats] Found ${prs.length} personal records`);
     return prs;
   } catch (error) {
-    console.error('[stats] Error fetching personal records:', error);
+    logger.error('[stats] Error fetching personal records:', error);
     throw error;
   }
 }
@@ -174,7 +175,7 @@ export async function getVolumeProgressData(
   exerciseId?: string,
   months = 3,
 ) {
-  console.log(
+  logger.log(
     `[stats] Fetching volume progress for user: ${userId}, exercise: ${exerciseId || 'all'}, months: ${months}`,
   );
 
@@ -205,17 +206,17 @@ export async function getVolumeProgressData(
       .groupBy(workouts.scheduledFor)
       .orderBy(workouts.scheduledFor);
 
-    console.log(`[stats] Found ${volumeData.length} volume data points`);
+    logger.log(`[stats] Found ${volumeData.length} volume data points`);
     return volumeData;
   } catch (error) {
-    console.error('[stats] Error fetching volume progress:', error);
+    logger.error('[stats] Error fetching volume progress:', error);
     throw error;
   }
 }
 
 // Get exercise distribution by muscle group
 export async function getMuscleGroupDistribution(userId: string, months = 1) {
-  console.log(
+  logger.log(
     `[stats] Fetching muscle group distribution for user: ${userId}, months: ${months}`,
   );
 
@@ -240,12 +241,12 @@ export async function getMuscleGroupDistribution(userId: string, months = 1) {
       )
       .groupBy(exercises.primaryMuscle);
 
-    console.log(
+    logger.log(
       `[stats] Found distribution for ${distribution.length} muscle groups`,
     );
     return distribution;
   } catch (error) {
-    console.error('[stats] Error fetching muscle group distribution:', error);
+    logger.error('[stats] Error fetching muscle group distribution:', error);
     throw error;
   }
 }
@@ -255,7 +256,7 @@ export async function getWorkoutCompletionRate(
   userId: string,
   mesocycleId?: string,
 ) {
-  console.log(
+  logger.log(
     `[stats] Fetching workout completion rate for user: ${userId}, mesocycle: ${mesocycleId || 'all'}`,
   );
 
@@ -282,7 +283,7 @@ export async function getWorkoutCompletionRate(
           100
         : 0;
 
-    console.log(
+    logger.log(
       `[stats] Completion rate: ${completionRate.toFixed(1)}% (${completionData.completedWorkouts}/${completionData.totalWorkouts})`,
     );
 
@@ -291,7 +292,7 @@ export async function getWorkoutCompletionRate(
       completionRate,
     };
   } catch (error) {
-    console.error('[stats] Error fetching completion rate:', error);
+    logger.error('[stats] Error fetching completion rate:', error);
     throw error;
   }
 }
@@ -302,7 +303,7 @@ export async function getExerciseProgress(
   exerciseId: string,
   months = 3,
 ) {
-  console.log(
+  logger.log(
     `[stats] Fetching progress for exercise: ${exerciseId}, user: ${userId}, months: ${months}`,
   );
 
@@ -330,17 +331,17 @@ export async function getExerciseProgress(
       )
       .orderBy(setsLogged.loggedAt);
 
-    console.log(`[stats] Found ${progress.length} progress data points`);
+    logger.log(`[stats] Found ${progress.length} progress data points`);
     return progress;
   } catch (error) {
-    console.error('[stats] Error fetching exercise progress:', error);
+    logger.error('[stats] Error fetching exercise progress:', error);
     throw error;
   }
 }
 
 // Get all exercises available to a user (public + custom)
 export async function getUserExercises(userId: string) {
-  console.log(`[stats] Fetching exercises for user: ${userId}`);
+  logger.log(`[stats] Fetching exercises for user: ${userId}`);
 
   try {
     // Get all exercises that the user has logged
@@ -359,10 +360,10 @@ export async function getUserExercises(userId: string) {
       .where(eq(mesocycles.userId, userId))
       .orderBy(exercises.name);
 
-    console.log(`[stats] Found ${userExercises.length} exercises used by user`);
+    logger.log(`[stats] Found ${userExercises.length} exercises used by user`);
     return userExercises;
   } catch (error) {
-    console.error('[stats] Error fetching user exercises:', error);
+    logger.error('[stats] Error fetching user exercises:', error);
     throw error;
   }
 }

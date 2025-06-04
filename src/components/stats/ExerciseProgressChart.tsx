@@ -44,10 +44,6 @@ export function ExerciseProgressChart({
 }: ExerciseProgressChartProps) {
   const { weightUnit } = useUserPreferences();
 
-  console.log(
-    `[ExerciseProgressChart] Rendering chart for ${exerciseName} with ${data.length} data points`,
-  );
-
   // Calculate averages for reference lines
   const avgWeight = data.reduce((sum, d) => sum + d.weight, 0) / data.length;
 

@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,7 +64,7 @@ export function SetsList({
   const [editingSet, setEditingSet] = useState<LoggedSet | null>(null);
   const [deletingSetId, setDeletingSetId] = useState<string | null>(null);
 
-  console.log(`[SetsList] Displaying ${sets.length} sets`);
+  logger.log(`[SetsList] Displaying ${sets.length} sets`);
 
   const handleEditSet = async (updatedSet: {
     id: string;
@@ -96,7 +97,7 @@ export function SetsList({
       toast.success('Set updated successfully');
       onSetUpdated?.();
     } catch (error) {
-      console.error('[SetsList] Error updating set:', error);
+      logger.error('[SetsList] Error updating set:', error);
       toast.error('Failed to update set');
     }
   };
@@ -117,7 +118,7 @@ export function SetsList({
       toast.success('Set deleted successfully');
       onSetDeleted?.();
     } catch (error) {
-      console.error('[SetsList] Error deleting set:', error);
+      logger.error('[SetsList] Error deleting set:', error);
       toast.error('Failed to delete set');
     } finally {
       setDeletingSetId(null);

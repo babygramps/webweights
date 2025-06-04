@@ -1,4 +1,5 @@
-﻿'use client';
+'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import {
@@ -33,7 +34,7 @@ export function ProgressionStrategySelector({
   );
 
   const handlePrimaryChange = (value: string) => {
-    console.log('Progression strategy changed to:', value);
+    logger.log('Progression strategy changed to:', value);
     const newStrategy: ProgressionStrategy = {
       ...strategy,
       primary: value as ProgressionStrategy['primary'],
@@ -73,7 +74,7 @@ export function ProgressionStrategySelector({
         [key]: checked,
       },
     };
-    console.log('Secondary adjustment changed:', key, checked);
+    logger.log('Secondary adjustment changed:', key, checked);
     setStrategy(newStrategy);
     onStrategyChange(newStrategy);
   };
@@ -89,7 +90,7 @@ export function ProgressionStrategySelector({
         [key]: checked,
       },
     };
-    console.log('Constraint changed:', key, checked);
+    logger.log('Constraint changed:', key, checked);
     setStrategy(newStrategy);
     onStrategyChange(newStrategy);
   };

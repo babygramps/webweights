@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export function ThemeToggle() {
       toast.success(`Theme changed to ${newTheme}`);
     } catch (error) {
       toast.error('Failed to update theme');
-      console.error('Error updating theme:', error);
+      logger.error('Error updating theme:', error);
     }
   };
 

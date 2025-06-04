@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import {
@@ -33,13 +34,11 @@ export function OneRMCalculator() {
   const [average, setAverage] = useState<number>(0);
 
   const handleCalculate = () => {
-    console.log('[OneRMCalculator] Calculating 1RM');
-
     const w = parseFloat(weight);
     const r = parseInt(reps);
 
     if (isNaN(w) || isNaN(r) || w <= 0 || r <= 0) {
-      console.warn('[OneRMCalculator] Invalid input');
+      logger.warn('[OneRMCalculator] Invalid input');
       return;
     }
 
@@ -52,8 +51,6 @@ export function OneRMCalculator() {
 
     setResults(formulaResults);
     setAverage(avg);
-
-    console.log('[OneRMCalculator] Results calculated:', formulaResults);
   };
 
   const handleClear = () => {

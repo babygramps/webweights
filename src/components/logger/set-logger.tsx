@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -85,7 +86,7 @@ export function SetLogger({
     }
   }, [previousSets.length, defaults, reps]);
 
-  console.log('SetLogger Debug:', {
+  logger.log('SetLogger Debug:', {
     exerciseName: exercise.name,
     exerciseType: exercise.type,
     isBarbellExercise,
@@ -114,7 +115,7 @@ export function SetLogger({
       // Double the plate weight since plates go on both sides of the bar
       const totalPlateWeight = weightNum * 2;
       totalWeight = totalPlateWeight + barbellWeight;
-      console.log('Adding barbell weight with plate doubling:', {
+      logger.log('Adding barbell weight with plate doubling:', {
         plateWeightPerSide: weightNum,
         totalPlateWeight,
         barbellWeight,
@@ -143,7 +144,7 @@ export function SetLogger({
       newSet.rpe = 10 - rir; // Convert RIR to RPE
     }
 
-    console.log('Logging set:', newSet);
+    logger.log('Logging set:', newSet);
     onLogSet(newSet);
 
     // Reset form but keep weight and barbell selection for next set
@@ -182,7 +183,7 @@ export function SetLogger({
         );
         const plateWeightPerSide = totalPlateWeight / 2;
         setWeight(plateWeightPerSide.toString());
-        console.log(
+        logger.log(
           'Repeating set with barbell separation and plate doubling:',
           {
             totalWeight: totalWeightInUserUnit,

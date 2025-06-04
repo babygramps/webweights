@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { addDays, addWeeks, startOfWeek, format } from 'date-fns';
 import { WorkoutTemplate } from '@/components/mesocycles/workout-template-designer';
 import { MesocycleProgression } from '@/types/progression';
@@ -53,7 +54,7 @@ export function generateWorkoutsFromTemplates(
   const workouts: GeneratedWorkout[] = [];
   const exercises: GeneratedExercise[] = [];
 
-  console.log('[generateWorkoutsFromTemplates] Starting generation with:', {
+  logger.log('[generateWorkoutsFromTemplates] Starting generation with:', {
     startDate: format(startDate, 'yyyy-MM-dd (EEEE)'),
     weeks,
     templatesCount: templates.length,
@@ -65,7 +66,7 @@ export function generateWorkoutsFromTemplates(
   });
 
   const mesocycleStart = new Date(startDate);
-  console.log(
+  logger.log(
     '[generateWorkoutsFromTemplates] Mesocycle start:',
     format(mesocycleStart, 'yyyy-MM-dd (EEEE)'),
   );
@@ -74,7 +75,7 @@ export function generateWorkoutsFromTemplates(
     const weekNumber = week + 1;
     const weekStart = addWeeks(mesocycleStart, week);
 
-    console.log(
+    logger.log(
       `[generateWorkoutsFromTemplates] Processing Week ${weekNumber}:`,
       {
         weekStart: format(weekStart, 'yyyy-MM-dd (EEEE)'),
@@ -103,7 +104,7 @@ export function generateWorkoutsFromTemplates(
 
         const isAfterStart = workoutDate >= mesocycleStart;
 
-        console.log(`[generateWorkoutsFromTemplates] Checking workout date:`, {
+        logger.log(`[generateWorkoutsFromTemplates] Checking workout date:`, {
           template: template.label,
           dayOfWeek,
           workoutDate: format(workoutDate, 'yyyy-MM-dd (EEEE)'),
@@ -124,7 +125,7 @@ export function generateWorkoutsFromTemplates(
             intensity_modifier: weekProgression?.intensity,
           });
 
-          console.log(`[generateWorkoutsFromTemplates] ✅ Created workout:`, {
+          logger.log(`[generateWorkoutsFromTemplates] ✅ Created workout:`, {
             date: format(workoutDate, 'yyyy-MM-dd (EEEE)'),
             label: `${template.label} - Week ${weekNumber}`,
             weekNumber,
@@ -140,7 +141,7 @@ export function generateWorkoutsFromTemplates(
             });
           });
         } else {
-          console.log(
+          logger.log(
             `[generateWorkoutsFromTemplates] ❌ Skipped workout (before start):`,
             {
               template: template.label,
@@ -154,7 +155,7 @@ export function generateWorkoutsFromTemplates(
     });
   }
 
-  console.log('[generateWorkoutsFromTemplates] Generation complete:', {
+  logger.log('[generateWorkoutsFromTemplates] Generation complete:', {
     totalWorkouts: workouts.length,
     totalExercises: exercises.length,
     workoutsByWeek: workouts.reduce(
