@@ -5,66 +5,27 @@ import { PRCard } from '@/components/stats/PRCard';
 import { ProgressChart } from '@/components/stats/ProgressChart';
 import { MuscleGroupChart } from '@/components/stats/MuscleGroupChart';
 import { OneRMCalculator } from '@/components/stats/OneRMCalculator';
+import { ExerciseStats } from '@/components/stats/ExerciseStats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
-
-interface RecentWorkout {
-  workoutId: string;
-  workoutDate: string;
-  workoutLabel: string | null;
-  mesocycleTitle: string;
-  setCount: number;
-  totalVolume: number;
-}
-
-interface WeightRecord {
-  weight: number;
-  reps: number;
-  date: string;
-}
-
-interface VolumeRecord {
-  volume: number;
-  date: string;
-}
-
-interface RepsRecord {
-  reps: number;
-  date: string;
-}
-
-interface PersonalRecord {
-  exerciseId: string;
-  exerciseName: string;
-  maxWeight: WeightRecord | null;
-  maxVolume: VolumeRecord | null;
-  maxReps: RepsRecord | null;
-}
-
-export interface VolumeData {
-  date: string;
-  totalVolume: number;
-  totalSets: number;
-  avgIntensity: number;
-}
-
-interface MuscleGroup {
-  primaryMuscle: string;
-  setCount: number;
-  totalVolume: number;
-}
+import type {
+  RecentWorkout,
+  PersonalRecord,
+  VolumeData,
+  MuscleGroup,
+  CompletionRate,
+  UserExercise,
+} from '@/lib/types/stats';
 
 interface StatsPageClientProps {
   recentWorkouts: RecentWorkout[];
   personalRecords: PersonalRecord[];
   volumeData: VolumeData[];
   muscleDistribution: MuscleGroup[];
-  completionRate: {
-    completedWorkouts: number;
-    completionRate: number;
-  };
+  completionRate: CompletionRate;
+  userExercises: UserExercise[];
   totalVolume: number;
   avgSetsPerWorkout: number;
 }
@@ -75,6 +36,7 @@ export function StatsPageClient({
   volumeData,
   muscleDistribution,
   completionRate,
+  userExercises,
   totalVolume,
   avgSetsPerWorkout,
 }: StatsPageClientProps) {
@@ -90,8 +52,9 @@ export function StatsPageClient({
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="exercises">Exercises</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
         </TabsList>
@@ -179,6 +142,17 @@ export function StatsPageClient({
               ))}
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="exercises" className="space-y-6">
+          <ExerciseStats
+            exercises={userExercises.map((ex) => ({
+              id: ex.id,
+              name: ex.name,
+              type: ex.type || 'Unknown',
+              primaryMuscle: ex.primaryMuscle || 'Unknown',
+            }))}
+          />
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-6">
