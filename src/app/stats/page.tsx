@@ -11,7 +11,6 @@ import {
 } from '@/lib/utils/stats-utils';
 import type { RawPersonalRecord, RawMuscleGroup } from '@/lib/types/stats';
 import { StatsPageClient } from './StatsPageClient';
-import { logger } from '@/lib/logger';
 
 export default async function StatsPage() {
   const supabase = await createClient();
@@ -21,7 +20,6 @@ export default async function StatsPage() {
 
   if (!user) {
     redirect('/');
-
   }
 
   logger.info(`[StatsPage] Loading stats for user ${user.id}`);
