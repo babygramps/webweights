@@ -8,6 +8,7 @@ A modern, mobile-first web application for weightlifters to design mesocycles, l
 - **Exercise Catalogue**: Comprehensive exercise database with filtering
 - **In-Gym Logger**: Mobile-optimized interface with rest timer
 - **Progress Tracking**: Visualize 1RM estimates, volume load, and personal records
+- **Data Export**: Download your complete workout history as a CSV file
 - **AI Assistant**: Get help building mesocycles with AI (coming soon)
 
 ## 🛠️ Tech Stack

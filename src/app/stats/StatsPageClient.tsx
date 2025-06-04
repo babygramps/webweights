@@ -8,6 +8,7 @@ import { OneRMCalculator } from '@/components/stats/OneRMCalculator';
 import { ExerciseStats } from '@/components/stats/ExerciseStats';
 import { StatsFilters } from '@/components/stats/StatsFilters';
 import { OneRMProgressChart } from '@/components/stats/OneRMProgressChart';
+import { ExportWorkoutsButton } from '@/components/stats/ExportWorkoutsButton';
 import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
@@ -316,14 +317,7 @@ export function StatsPageClient({
         <TabsContent value="tools" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <OneRMCalculator />
-
-            {/* Placeholder for future tools */}
-            <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
-              <p className="text-lg font-medium mb-2">More Tools Coming Soon</p>
-              <p className="text-sm">
-                RPE/RIR converter, Volume calculator, and more analytical tools
-              </p>
-            </div>
+            <ExportWorkoutsButton />
           </div>
         </TabsContent>
       </Tabs>
