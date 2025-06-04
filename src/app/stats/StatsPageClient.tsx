@@ -7,10 +7,12 @@ import { MuscleGroupChart } from '@/components/stats/MuscleGroupChart';
 import { OneRMCalculator } from '@/components/stats/OneRMCalculator';
 import { ExerciseStats } from '@/components/stats/ExerciseStats';
 import { StatsFilters } from '@/components/stats/StatsFilters';
+import { OneRMProgressChart } from '@/components/stats/OneRMProgressChart';
+import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 import { isDateInRange, filterPersonalRecords } from '@/lib/utils/stats-filter';
@@ -34,6 +36,15 @@ interface StatsPageClientProps {
   avgSetsPerWorkout: number;
 }
 
+interface ExerciseProgressData {
+  date: string | Date;
+  weight: number;
+  reps: number;
+  rir?: number;
+  rpe?: number;
+  volume: number;
+}
+
 export function StatsPageClient({
   recentWorkouts,
   personalRecords,
@@ -50,6 +61,9 @@ export function StatsPageClient({
     string | undefined
   >();
   const [selectedMuscle, setSelectedMuscle] = useState<string | undefined>();
+  const [exerciseProgress, setExerciseProgress] = useState<
+    ExerciseProgressData[]
+  >([]);
 
   const muscleGroups = useMemo(
     () => Array.from(new Set(muscleDistribution.map((m) => m.primaryMuscle))),
@@ -88,6 +102,22 @@ export function StatsPageClient({
       dateRange,
     ],
   );
+
+  const filteredExerciseProgress = useMemo(
+    () => exerciseProgress.filter((d) => isDateInRange(d.date, dateRange)),
+    [exerciseProgress, dateRange],
+  );
+
+  useEffect(() => {
+    if (!selectedExercise) {
+      setExerciseProgress([]);
+      return;
+    }
+
+    fetchExerciseProgressData(selectedExercise)
+      .then((data) => setExerciseProgress(data || []))
+      .catch(() => setExerciseProgress([]));
+  }, [selectedExercise]);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -250,6 +280,15 @@ export function StatsPageClient({
             chartType="line"
             color="#3b82f6"
           />
+
+          {selectedExercise && filteredExerciseProgress.length > 0 && (
+            <OneRMProgressChart
+              exerciseName={
+                userExercises.find((e) => e.id === selectedExercise)?.name || ''
+              }
+              sets={filteredExerciseProgress}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="tools" className="space-y-6">
