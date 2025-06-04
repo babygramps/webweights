@@ -11,7 +11,6 @@ import {
   getUserExercises,
 } from '@/db/queries/stats';
 
-import { fetchExerciseProgress } from './actions';
 import { StatsCard } from '@/components/stats/StatsCard';
 import { PRCard } from '@/components/stats/PRCard';
 import { ProgressChart } from '@/components/stats/ProgressChart';
@@ -351,7 +350,6 @@ export default async function StatsPage() {
                   type: ex.type || 'Unknown',
                   primaryMuscle: ex.primaryMuscle || 'Unknown',
                 }))}
-                onExerciseSelect={fetchExerciseProgress}
               />
             </TabsContent>
 

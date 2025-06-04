@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from './StatsCard';
 import { Trophy, TrendingUp, Dumbbell, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
 
 interface Exercise {
   id: string;
@@ -39,31 +40,45 @@ interface ExerciseProgressData {
 
 interface ExerciseStatsProps {
   exercises: Exercise[];
-  onExerciseSelect?: (exerciseId: string) => Promise<ExerciseProgressData[]>;
 }
 
-export function ExerciseStats({
-  exercises,
-  onExerciseSelect,
-}: ExerciseStatsProps) {
+export function ExerciseStats({ exercises }: ExerciseStatsProps) {
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [progressData, setProgressData] = useState<ExerciseProgressData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleExerciseChange = async (exerciseId: string) => {
     console.log(`[ExerciseStats] Exercise selected: ${exerciseId}`);
     setSelectedExercise(exerciseId);
+    setError(null);
 
-    if (onExerciseSelect && exerciseId) {
+    if (exerciseId) {
       setLoading(true);
       try {
-        const data = await onExerciseSelect(exerciseId);
+        console.log(
+          `[ExerciseStats] Fetching data for exercise: ${exerciseId}`,
+        );
+
+        const data = await fetchExerciseProgressData(exerciseId);
         console.log(
           `[ExerciseStats] Loaded ${data.length} progress data points`,
         );
-        setProgressData(data);
+        setProgressData(data || []);
       } catch (error) {
         console.error('[ExerciseStats] Error loading exercise data:', error);
+        console.error('[ExerciseStats] Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : 'No stack available',
+          exerciseId,
+        });
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to load exercise data',
+        );
+        setProgressData([]);
       } finally {
         setLoading(false);
       }
@@ -94,58 +109,64 @@ export function ExerciseStats({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Exercise Progress Tracker</CardTitle>
+        <CardTitle>Exercise Analysis</CardTitle>
         <CardDescription>
-          Select an exercise to view detailed progress and statistics
+          Deep dive into your performance for specific exercises
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Exercise Selector */}
         <div>
-          <label
-            htmlFor="exercise-select"
-            className="text-sm font-medium mb-2 block"
-          >
-            Choose Exercise
+          <label className="text-sm font-medium mb-2 block">
+            Select Exercise
           </label>
           <Select value={selectedExercise} onValueChange={handleExerciseChange}>
-            <SelectTrigger id="exercise-select" className="w-full">
-              <SelectValue placeholder="Select an exercise to view stats" />
+            <SelectTrigger>
+              <SelectValue placeholder="Choose an exercise to analyze" />
             </SelectTrigger>
             <SelectContent>
               {exercises.map((exercise) => (
                 <SelectItem key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                  <span className="text-muted-foreground text-sm ml-2">
-                    ({exercise.primaryMuscle})
-                  </span>
+                  {exercise.name} ({exercise.primaryMuscle})
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Exercise Details and Stats */}
-        {selectedExercise && selectedExerciseData && (
-          <div className="space-y-6">
-            {/* Exercise Info */}
-            <div className="p-4 bg-secondary/20 rounded-lg">
-              <h3 className="font-semibold text-lg">
+        {loading && (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Loading exercise data...
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+            <h4 className="font-medium text-destructive mb-2">
+              Error Loading Data
+            </h4>
+            <p className="text-sm text-destructive/80">{error}</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Please try selecting a different exercise or refresh the page.
+            </p>
+          </div>
+        )}
+
+        {selectedExerciseData && !loading && !error && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
                 {selectedExerciseData.name}
               </h3>
-              <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                <span>Type: {selectedExerciseData.type}</span>
-                <span>
-                  Primary Muscle: {selectedExerciseData.primaryMuscle}
-                </span>
-              </div>
+              <span className="text-sm text-muted-foreground">
+                {selectedExerciseData.primaryMuscle} •{' '}
+                {selectedExerciseData.type}
+              </span>
             </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : progressData.length > 0 ? (
+            {progressData.length > 0 ? (
               <Tabs defaultValue="overview" className="space-y-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
