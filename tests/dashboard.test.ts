@@ -14,7 +14,8 @@ import {
   getPersonalRecords,
 } from '@/db/queries/stats';
 
-let selectMock: Mock;
+// eslint-disable-next-line no-var
+var selectMock: Mock;
 vi.mock('@/db/queries/stats');
 vi.mock('@/db/index', () => {
   selectMock = vi.fn();
