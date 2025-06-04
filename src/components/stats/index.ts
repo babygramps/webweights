@@ -7,3 +7,4 @@ export { ExerciseProgressChart } from './ExerciseProgressChart';
 export { OneRMCalculator } from './OneRMCalculator';
 export { ExerciseStats } from './ExerciseStats';
 export { OneRMProgressChart } from './OneRMProgressChart';
+export { ExportWorkoutsButton } from './ExportWorkoutsButton';

@@ -208,3 +208,25 @@ export function downloadJson(data: unknown, filename: string) {
   anchor.click();
   URL.revokeObjectURL(url);
 }
+
+export function downloadCsv<T extends Record<string, unknown>>(
+  data: T[],
+  filename: string,
+) {
+  if (!data.length) return;
+  const headers = Object.keys(data[0]);
+  const escape = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+    const str = String(value);
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  };
+  const rows = data.map((row) => headers.map((h) => escape(row[h])).join(','));
+  const csvContent = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
