@@ -1,26 +1,11 @@
-const isProduction = process.env.NODE_ENV === 'production';
-
 export const logger = {
-  log: (...args: unknown[]): void => {
-    if (!isProduction) {
-      console.log(...args);
-    }
-  },
-  error: (...args: unknown[]): void => {
-    if (!isProduction) {
-      console.error(...args);
-    }
-  },
-  warn: (...args: unknown[]): void => {
-    if (!isProduction) {
-      console.warn(...args);
-    }
-  },
-  info: (...args: unknown[]): void => {
-    if (!isProduction) {
-      console.info(...args);
+  info: (...args: unknown[]) => console.log(...args),
+  warn: (...args: unknown[]) => console.warn(...args),
+  error: (...args: unknown[]) => console.error(...args),
+  debug: (...args: unknown[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug(...args);
     }
   },
 };
-
-export default logger;
+er;
