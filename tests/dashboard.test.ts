@@ -14,13 +14,16 @@ import {
   getPersonalRecords,
 } from '@/db/queries/stats';
 
+let selectMock: Mock;
 vi.mock('@/db/queries/stats');
-const selectMock: Mock = vi.fn();
-vi.mock('@/db/index', () => ({
-  db: { select: selectMock },
-  mesocycles: {},
-  workouts: {},
-}));
+vi.mock('@/db/index', () => {
+  selectMock = vi.fn();
+  return {
+    db: { select: selectMock },
+    mesocycles: {},
+    workouts: {},
+  };
+});
 
 type QueryResult = Record<string, unknown>[];
 function createSelect(result: QueryResult) {

@@ -26,8 +26,8 @@ export function PRCard({
     `[PRCard] Rendering PR for ${exerciseName}: ${convertWeight(weight)}${weightUnit} x ${reps} reps`,
   );
 
-  const formattedDate =
-    typeof date === 'string' ? date : format(date, 'MMM d, yyyy');
+  const parsedDate = typeof date === 'string' ? new Date(date) : date;
+  const formattedDate = format(parsedDate, 'PPP');
 
   return (
     <Card
