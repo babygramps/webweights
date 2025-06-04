@@ -16,24 +16,21 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { getDashboardOverview } from '@/db/queries/dashboard';
 
 export default async function DashboardPage() {
-  // TODO: Use supabase to fetch actual data from database
-  // const supabase = await createClient();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // TODO: Fetch actual data from database
-  const stats = {
-    currentWeek: 3,
-    totalWorkouts: 12,
-    nextWorkout: 'Push Day',
-    personalRecords: 2,
-  };
+  if (!user) {
+    redirect('/');
+  }
 
-  const recentWorkouts = [
-    { id: 1, name: 'Push Day', date: '2025-05-25', sets: 24 },
-    { id: 2, name: 'Pull Day', date: '2025-05-23', sets: 22 },
-    { id: 3, name: 'Leg Day', date: '2025-05-21', sets: 20 },
-  ];
+  const overview = await getDashboardOverview(user.id);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -69,7 +66,9 @@ export default async function DashboardPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Week {stats.currentWeek}</div>
+              <div className="text-2xl font-bold">
+                Week {overview.currentWeek ?? '-'}
+              </div>
               <p className="text-xs text-muted-foreground">of your mesocycle</p>
             </CardContent>
           </Card>
@@ -82,7 +81,7 @@ export default async function DashboardPage() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalWorkouts}</div>
+              <div className="text-2xl font-bold">{overview.totalWorkouts}</div>
               <p className="text-xs text-muted-foreground">this mesocycle</p>
             </CardContent>
           </Card>
@@ -95,7 +94,9 @@ export default async function DashboardPage() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.nextWorkout}</div>
+              <div className="text-2xl font-bold">
+                {overview.nextWorkout ?? 'None'}
+              </div>
               <p className="text-xs text-muted-foreground">scheduled today</p>
             </CardContent>
           </Card>
@@ -106,7 +107,9 @@ export default async function DashboardPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.personalRecords}</div>
+              <div className="text-2xl font-bold">
+                {overview.personalRecords}
+              </div>
               <p className="text-xs text-muted-foreground">this week</p>
             </CardContent>
           </Card>
@@ -121,18 +124,18 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentWorkouts.map((workout) => (
+            {overview.recentWorkouts.map((workout) => (
               <div
-                key={workout.id}
+                key={workout.workoutId}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
               >
                 <div>
-                  <p className="font-medium">{workout.name}</p>
+                  <p className="font-medium">{workout.workoutLabel}</p>
                   <p className="text-sm text-muted-foreground">
-                    {workout.date} • {workout.sets} sets completed
+                    {workout.workoutDate} • {workout.setCount} sets completed
                   </p>
                 </div>
-                <Link href={`/logger/${workout.id}`}>
+                <Link href={`/logger/${workout.workoutId}`}>
                   <Button variant="ghost" size="icon">
                     <ArrowRight className="h-4 w-4" />
                   </Button>
