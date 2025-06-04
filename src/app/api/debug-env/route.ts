@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return new Response('Not Found', { status: 404 });
+  }
+
   console.log('🔍 [Debug API] Environment check requested');
 
   const envInfo = {
