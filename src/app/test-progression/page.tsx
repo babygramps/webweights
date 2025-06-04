@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState, useCallback } from 'react';
 import { ProgressiveIntensityDesigner } from '@/components/mesocycles/progressive-intensity-designer';
@@ -13,7 +14,7 @@ export default function TestProgressionPage() {
   const handleProgressionChange = useCallback(
     (newProgression: MesocycleProgression) => {
       setProgression(newProgression);
-      console.log('Progression updated:', newProgression);
+      logger.log('Progression updated:', newProgression);
     },
     [],
   );

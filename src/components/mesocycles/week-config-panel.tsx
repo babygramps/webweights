@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,19 +46,19 @@ export function WeekConfigPanel({
         [param]: value,
       };
       onUpdateIntensity(updatedIntensity);
-      console.log(`Updated ${param} for week ${weekNumber}:`, value);
+      logger.log(`Updated ${param} for week ${weekNumber}:`, value);
     },
     [weekIntensity.intensity, onUpdateIntensity, weekNumber],
   );
 
   const handleDeloadToggle = useCallback(
     (checked: boolean) => {
-      console.log('[Switch] handleDeloadToggle called', {
+      logger.log('[Switch] handleDeloadToggle called', {
         checked,
         currentIsDeload: weekIntensity.isDeload,
       });
       if (checked === weekIntensity.isDeload) {
-        console.log('[Switch] handleDeloadToggle: No change, skipping update.');
+        logger.log('[Switch] handleDeloadToggle: No change, skipping update.');
         return;
       }
       onUpdateDeload(checked);
@@ -68,7 +69,7 @@ export function WeekConfigPanel({
         onUpdateIntensity(DEFAULT_INTENSITY);
         onUpdateLabel('');
       }
-      console.log(`Toggled deload for week ${weekNumber}:`, checked);
+      logger.log(`Toggled deload for week ${weekNumber}:`, checked);
     },
     [
       onUpdateDeload,
@@ -128,7 +129,7 @@ export function WeekConfigPanel({
         );
       }
 
-      console.log(`Applied ${preset} preset to week ${weekNumber}`);
+      logger.log(`Applied ${preset} preset to week ${weekNumber}`);
     },
     [onUpdateIntensity, onUpdateDeload, onUpdateLabel, weekNumber],
   );

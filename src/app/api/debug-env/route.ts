@@ -1,11 +1,9 @@
+import logger from '@/lib/logger';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  if (process.env.NODE_ENV !== 'development') {
-    return new Response('Not Found', { status: 404 });
-  }
+  logger.log('🔍 [Debug API] Environment check requested');
 
-  console.log('🔍 [Debug API] Environment check requested');
 
   const envInfo = {
     timestamp: new Date().toISOString(),
@@ -54,7 +52,7 @@ export async function GET() {
     ALL_ENV_KEYS: Object.keys(process.env).sort(),
   };
 
-  console.log('🔍 [Debug API] Environment info:', envInfo);
+  logger.log('🔍 [Debug API] Environment info:', envInfo);
 
   return NextResponse.json(envInfo, {
     headers: {

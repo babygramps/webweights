@@ -21,8 +21,6 @@ export function StatsCard({
   trend,
   className = '',
 }: StatsCardProps) {
-  console.log(`[StatsCard] Rendering stat: ${title} = ${value}`);
-
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

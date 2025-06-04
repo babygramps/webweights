@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import { useState } from 'react';
 import { format, addDays, addWeeks } from 'date-fns';
@@ -40,7 +41,7 @@ export function WorkoutWeekPreview({
   const [expandedWeeks, setExpandedWeeks] = useState<number[]>([]);
   const [showAllWeeks, setShowAllWeeks] = useState(false);
 
-  console.log('[WorkoutWeekPreview] Rendering preview with:', {
+  logger.log('[WorkoutWeekPreview] Rendering preview with:', {
     weeks,
     templates: workoutTemplates.length,
     hasProgression: !!progression,
@@ -48,7 +49,7 @@ export function WorkoutWeekPreview({
   });
 
   const toggleWeek = (weekNumber: number) => {
-    console.log(`[WorkoutWeekPreview] Toggling week ${weekNumber}`);
+    logger.log(`[WorkoutWeekPreview] Toggling week ${weekNumber}`);
     setExpandedWeeks((prev) =>
       prev.includes(weekNumber)
         ? prev.filter((w) => w !== weekNumber)
@@ -57,7 +58,7 @@ export function WorkoutWeekPreview({
   };
 
   const toggleAllWeeks = () => {
-    console.log(
+    logger.log(
       '[WorkoutWeekPreview] Toggling all weeks:',
       showAllWeeks ? 'collapsing' : 'expanding',
     );
@@ -75,7 +76,7 @@ export function WorkoutWeekPreview({
     const weekIntensity =
       progression.weeklyProgressions.find((w) => w.week === weekNumber) || null;
     if (weekIntensity) {
-      console.log(
+      logger.log(
         `[WorkoutWeekPreview] Week ${weekNumber} intensity:`,
         weekIntensity,
       );
@@ -119,7 +120,7 @@ export function WorkoutWeekPreview({
       }
     }
 
-    console.log(
+    logger.log(
       `[WorkoutWeekPreview] Week ${weekNumber} workouts:`,
       workouts.length,
     );

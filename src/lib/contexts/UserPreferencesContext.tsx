@@ -1,4 +1,5 @@
 'use client';
+import logger from '@/lib/logger';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -125,7 +126,7 @@ export function UserPreferencesProvider({
     if (!error) {
       setPreferences((prev) => ({ ...prev, weightUnit: unit }));
     } else {
-      console.error('Error updating weight unit:', error);
+      logger.error('Error updating weight unit:', error);
       throw error;
     }
   };
@@ -138,7 +139,7 @@ export function UserPreferencesProvider({
         .update({ theme })
         .eq('user_id', user.id);
       if (error) {
-        console.error('Error updating theme:', error);
+        logger.error('Error updating theme:', error);
         throw error;
       }
     }
