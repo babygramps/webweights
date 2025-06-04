@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   logger.log('🔍 [Debug API] Environment check requested');
 
+
   const envInfo = {
     timestamp: new Date().toISOString(),
     NODE_ENV: process.env.NODE_ENV,
