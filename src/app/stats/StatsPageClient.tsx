@@ -9,10 +9,11 @@ import { ExerciseStats } from '@/components/stats/ExerciseStats';
 import { StatsFilters } from '@/components/stats/StatsFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { useState, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
+import { isDateInRange, filterPersonalRecords } from '@/lib/utils/stats-filter';
 import type {
   RecentWorkout,
   PersonalRecord,
@@ -55,23 +56,15 @@ export function StatsPageClient({
     [muscleDistribution],
   );
 
-  const filteredRecentWorkouts = useMemo(() => {
-    return recentWorkouts.filter((w) => {
-      const date = new Date(w.workoutDate);
-      if (dateRange?.from && date < startOfDay(dateRange.from)) return false;
-      if (dateRange?.to && date > endOfDay(dateRange.to)) return false;
-      return true;
-    });
-  }, [recentWorkouts, dateRange]);
+  const filteredRecentWorkouts = useMemo(
+    () => recentWorkouts.filter((w) => isDateInRange(w.workoutDate, dateRange)),
+    [recentWorkouts, dateRange],
+  );
 
-  const filteredVolumeData = useMemo(() => {
-    return volumeData.filter((d) => {
-      const date = new Date(d.date);
-      if (dateRange?.from && date < startOfDay(dateRange.from)) return false;
-      if (dateRange?.to && date > endOfDay(dateRange.to)) return false;
-      return true;
-    });
-  }, [volumeData, dateRange]);
+  const filteredVolumeData = useMemo(
+    () => volumeData.filter((d) => isDateInRange(d.date, dateRange)),
+    [volumeData, dateRange],
+  );
 
   const filteredMuscleDistribution = useMemo(() => {
     return muscleDistribution.filter((m) =>
@@ -79,19 +72,22 @@ export function StatsPageClient({
     );
   }, [muscleDistribution, selectedMuscle]);
 
-  const filteredPersonalRecords = useMemo(() => {
-    let prs = personalRecords;
-    if (selectedExercise) {
-      prs = prs.filter((pr) => pr.exerciseId === selectedExercise);
-    }
-    if (selectedMuscle) {
-      const ids = userExercises
-        .filter((ex) => ex.primaryMuscle === selectedMuscle)
-        .map((ex) => ex.id);
-      prs = prs.filter((pr) => ids.includes(pr.exerciseId));
-    }
-    return prs;
-  }, [personalRecords, selectedExercise, selectedMuscle, userExercises]);
+  const filteredPersonalRecords = useMemo(
+    () =>
+      filterPersonalRecords(personalRecords, {
+        range: dateRange,
+        exerciseId: selectedExercise,
+        muscle: selectedMuscle,
+        userExercises,
+      }),
+    [
+      personalRecords,
+      selectedExercise,
+      selectedMuscle,
+      userExercises,
+      dateRange,
+    ],
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
