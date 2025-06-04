@@ -36,12 +36,18 @@ describe('getUserWorkoutData', () => {
   it('returns flattened workout rows', async () => {
     selectMock.mockImplementationOnce(
       createSelect([
-        { workoutDate: '2024-01-01', exerciseName: 'Bench', reps: 5 },
+        {
+          workoutDate: '2024-01-01',
+          exerciseName: 'Bench',
+          reps: 5,
+          intensityVolume: 100,
+        },
       ]),
     );
 
     const result = await getUserWorkoutData('user1');
     expect(result).toHaveLength(1);
     expect(result[0].exerciseName).toBe('Bench');
+    expect(result[0].intensityVolume).toBe(100);
   });
 });

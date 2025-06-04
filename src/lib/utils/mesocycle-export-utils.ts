@@ -217,7 +217,8 @@ export function downloadCsv<T extends Record<string, unknown>>(
   const headers = Object.keys(data[0]);
   const escape = (value: unknown) => {
     if (value === null || value === undefined) return '';
-    const str = String(value);
+    const str =
+      typeof value === 'object' ? JSON.stringify(value) : String(value);
     return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
   };
   const rows = data.map((row) => headers.map((h) => escape(row[h])).join(','));

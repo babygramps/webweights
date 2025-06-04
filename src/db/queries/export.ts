@@ -6,7 +6,12 @@ export interface WorkoutSetExport {
   workoutDate: string | null;
   workoutLabel: string | null;
   weekNumber: number | null;
-  intensityModifier: unknown | null;
+  intensityVolume: number | null;
+  intensityWeight: number | null;
+  intensityRir: number | null;
+  intensityRpe: number | null;
+  intensitySets: number | null;
+  intensityRepsModifier: number | null;
   exerciseName: string | null;
   setNumber: number | null;
   weight: number | null;
@@ -24,7 +29,12 @@ export async function getUserWorkoutData(
       workoutDate: workouts.scheduledFor,
       workoutLabel: workouts.label,
       weekNumber: workouts.weekNumber,
-      intensityModifier: workouts.intensityModifier,
+      intensityVolume: sql<number>`(${workouts.intensityModifier} ->> 'volume')::double precision`,
+      intensityWeight: sql<number>`(${workouts.intensityModifier} ->> 'weight')::double precision`,
+      intensityRir: sql<number>`(${workouts.intensityModifier} ->> 'rir')::double precision`,
+      intensityRpe: sql<number>`(${workouts.intensityModifier} ->> 'rpe')::double precision`,
+      intensitySets: sql<number>`(${workouts.intensityModifier} ->> 'sets')::double precision`,
+      intensityRepsModifier: sql<number>`(${workouts.intensityModifier} ->> 'repsModifier')::double precision`,
       exerciseName: exercises.name,
       setNumber: setsLogged.setNumber,
       weight: sql<number>`${setsLogged.weight}`,
