@@ -246,6 +246,7 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                       volume: convertWeight(d.volume),
                     }))}
                     showVolume={true}
+                    showOneRM={true}
                   />
                 </TabsContent>
               </Tabs>
