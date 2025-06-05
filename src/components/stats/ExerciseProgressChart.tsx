@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
+import { calculateAverage1RM } from '@/lib/utils/1rm-calculator';
 
 interface ExerciseProgressData {
   date: Date | string;
@@ -35,12 +36,14 @@ interface ExerciseProgressChartProps {
   exerciseName: string;
   data: ExerciseProgressData[];
   showVolume?: boolean;
+  showOneRM?: boolean;
 }
 
 export function ExerciseProgressChart({
   exerciseName,
   data,
   showVolume = true,
+  showOneRM = false,
 }: ExerciseProgressChartProps) {
   const { weightUnit } = useUserPreferences();
 
@@ -48,16 +51,19 @@ export function ExerciseProgressChart({
   const avgWeight = data.reduce((sum, d) => sum + d.weight, 0) / data.length;
 
   // Format data for chart
-  const chartData: ExerciseProgressData[] = data.map((d) => ({
-    ...d,
-    date: typeof d.date === 'string' ? d.date : format(d.date, 'MMM d'),
-    intensity:
-      d.rir !== undefined
-        ? `${d.rir} RIR`
-        : d.rpe !== undefined
-          ? `${d.rpe} RPE`
-          : undefined,
-  }));
+  const chartData: (ExerciseProgressData & { oneRm: number })[] = data.map(
+    (d) => ({
+      ...d,
+      date: typeof d.date === 'string' ? d.date : format(d.date, 'MMM d'),
+      intensity:
+        d.rir !== undefined
+          ? `${d.rir} RIR`
+          : d.rpe !== undefined
+            ? `${d.rpe} RPE`
+            : undefined,
+      oneRm: calculateAverage1RM(d.weight, d.reps),
+    }),
+  );
 
   const CustomTooltip = ({
     active,
@@ -66,7 +72,9 @@ export function ExerciseProgressChart({
   }: import('recharts').TooltipProps<string, string>) => {
     if (active && payload && payload.length) {
       const firstPayload = payload[0];
-      const payloadData = firstPayload.payload as ExerciseProgressData;
+      const payloadData = firstPayload.payload as ExerciseProgressData & {
+        oneRm?: number;
+      };
       return (
         <div className="bg-background border rounded-lg shadow-lg p-3 space-y-1">
           <p className="text-sm font-medium">{label}</p>
@@ -75,6 +83,7 @@ export function ExerciseProgressChart({
               {entry.name}: {entry.value}
               {entry.dataKey === 'weight' && ` ${weightUnit}`}
               {entry.dataKey === 'volume' && ` ${weightUnit}`}
+              {entry.dataKey === 'oneRm' && ` ${weightUnit}`}
             </p>
           ))}
           {payloadData.intensity && (
@@ -144,6 +153,17 @@ export function ExerciseProgressChart({
               name="Weight"
               dot={{ r: 4 }}
             />
+            {showOneRM && (
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="oneRm"
+                stroke="#ef4444"
+                strokeWidth={2}
+                name="1RM"
+                dot={{ r: 4 }}
+              />
+            )}
             <Line
               yAxisId="right"
               type="monotone"
@@ -169,13 +189,21 @@ export function ExerciseProgressChart({
         </ResponsiveContainer>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Max Weight</p>
             <p className="text-lg font-semibold">
               {Math.max(...data.map((d) => d.weight))} {weightUnit}
             </p>
           </div>
+          {showOneRM && (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Max 1RM</p>
+              <p className="text-lg font-semibold">
+                {Math.max(...chartData.map((d) => d.oneRm))} {weightUnit}
+              </p>
+            </div>
+          )}
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Max Reps</p>
             <p className="text-lg font-semibold">
