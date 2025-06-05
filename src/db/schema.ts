@@ -109,3 +109,57 @@ export const progressionTemplates = pgTable('progression_templates', {
   createdBy: uuid('created_by'), // References auth.users
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+// AI Coach Sessions table
+export const aiCoachSessions = pgTable('ai_coach_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(), // References auth.users
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow(),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  context: jsonb('context'),
+  summary: text('summary'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+// AI Coach Messages table
+export const aiCoachMessages = pgTable('ai_coach_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id')
+    .notNull()
+    .references(() => aiCoachSessions.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(), // 'user', 'assistant', 'system'
+  content: text('content').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+// AI Insights table
+export const aiInsights = pgTable('ai_insights', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(), // References auth.users
+  type: text('type').notNull(), // 'progress', 'recovery', 'form', 'plateau', 'general'
+  targetType: text('target_type'), // 'mesocycle', 'workout', 'exercise', 'general'
+  targetId: uuid('target_id'),
+  insight: jsonb('insight').notNull(),
+  score: numeric('score'), // 0-100
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  isRead: boolean('is_read').default(false),
+});
+
+// AI Coach Actions table
+export const aiCoachActions = pgTable('ai_coach_actions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').references(() => aiCoachSessions.id, {
+    onDelete: 'cascade',
+  }),
+  userId: uuid('user_id').notNull(), // References auth.users
+  actionType: text('action_type').notNull(),
+  params: jsonb('params'),
+  status: text('status').notNull(), // 'pending', 'completed', 'failed'
+  result: jsonb('result'),
+  error: text('error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+});
