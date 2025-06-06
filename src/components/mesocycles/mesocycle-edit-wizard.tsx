@@ -50,6 +50,7 @@ import {
 import { ProgressiveIntensityDesigner } from '@/components/mesocycles/progressive-intensity-designer';
 import { WorkoutWeekPreview } from '@/components/mesocycles/workout-week-preview';
 import { MesocycleProgression } from '@/types/progression';
+import { workoutsToTemplates } from '@/lib/utils/workout-template-utils';
 
 const mesocycleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
@@ -61,6 +62,25 @@ const mesocycleSchema = z.object({
 });
 
 type MesocycleFormData = z.infer<typeof mesocycleSchema>;
+
+interface LoadedWorkout {
+  id: string;
+  scheduled_for: string;
+  label: string;
+  week_number?: number;
+  workout_exercises?: Array<{
+    exercise_id: string;
+    order_idx: number;
+    defaults: {
+      sets: number;
+      reps: string;
+      rir?: number;
+      rpe?: number;
+      rest: string;
+    };
+    exercise?: { name: string } | null;
+  }>;
+}
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -104,14 +124,7 @@ export function MesocycleEditWizard({
   );
   const [saving, setSaving] = useState(false);
   const [existingWorkouts, setExistingWorkouts] = useState<number>(0);
-  const [workouts, setWorkouts] = useState<
-    Array<{
-      id: string;
-      scheduled_for: string;
-      label: string;
-      week_number?: number;
-    }>
-  >([]);
+  const [workouts, setWorkouts] = useState<LoadedWorkout[]>([]);
 
   const form = useForm<MesocycleFormData>({
     resolver: zodResolver(mesocycleSchema),
@@ -165,13 +178,27 @@ export function MesocycleEditWizard({
 
       const { data: workoutData } = await supabase
         .from('workouts')
-        .select('id, scheduled_for, label, week_number')
+        .select(
+          `id, scheduled_for, label, week_number,
+           workout_exercises (
+             exercise_id,
+             order_idx,
+             defaults,
+             exercise:exercises (name)
+           )
+          `,
+        )
         .eq('mesocycle_id', mesocycleId)
         .order('scheduled_for', { ascending: true });
-      setWorkouts(workoutData || []);
+      setWorkouts((workoutData as unknown as LoadedWorkout[]) || []);
+      if (workoutTemplates.length === 0 && workoutData) {
+        setWorkoutTemplates(
+          workoutsToTemplates(workoutData as unknown as LoadedWorkout[]),
+        );
+      }
     };
     loadData();
-  }, [mesocycleId, router, form]);
+  }, [mesocycleId, router, form, workoutTemplates.length]);
   const nextStep = () => {
     if (currentStep === 0) {
       // Validate basic info before proceeding
@@ -492,9 +519,9 @@ export function MesocycleEditWizard({
             {existingWorkouts > 0 && (
               <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>Note:</strong> This mesocycle has {existingWorkouts}{' '}
-                  existing workouts. Creating new workout templates will replace
-                  them.
+                  <strong>Note:</strong> Editing the templates below will
+                  overwrite
+                  {` ${existingWorkouts} existing workouts when saved.`}
                 </p>
               </div>
             )}
