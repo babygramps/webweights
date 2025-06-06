@@ -29,3 +29,23 @@ export async function getWorkoutsInRange(
     )
     .orderBy(workouts.scheduledFor);
 }
+
+export async function getUpcomingWorkouts(userId: string, limit = 50) {
+  const today = new Date().toISOString().split('T')[0];
+
+  return db
+    .select({
+      id: workouts.id,
+      scheduledFor: workouts.scheduledFor,
+      label: workouts.label,
+      weekNumber: workouts.weekNumber,
+      intensityModifier: workouts.intensityModifier,
+    })
+    .from(workouts)
+    .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+    .where(
+      and(eq(mesocycles.userId, userId), gte(workouts.scheduledFor, today)),
+    )
+    .orderBy(workouts.scheduledFor)
+    .limit(limit);
+}

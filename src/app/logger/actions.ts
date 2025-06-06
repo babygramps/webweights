@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { format } from 'date-fns';
-import { getWorkoutsInRange } from '@/db/queries/workouts';
+import { getWorkoutsInRange, getUpcomingWorkouts } from '@/db/queries/workouts';
 import { startOfWeek, endOfWeek } from 'date-fns';
 import { redirect } from 'next/navigation';
 
@@ -20,6 +20,19 @@ export async function getWorkoutsForCurrentWeek() {
   const end = endOfWeek(new Date(), { weekStartsOn: 1 });
 
   return getWorkoutsInRange(user.id, start, end);
+}
+
+export async function getAllUpcomingWorkouts() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  return getUpcomingWorkouts(user.id);
 }
 
 export async function createFreestyleWorkout() {
