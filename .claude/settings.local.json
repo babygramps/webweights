@@ -5,7 +5,10 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm format:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(pnpm db:generate:*)"
     ],
     "deny": []
   }
