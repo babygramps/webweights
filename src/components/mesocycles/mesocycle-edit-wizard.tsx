@@ -1,7 +1,7 @@
 'use client';
 import logger from '@/lib/logger';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -104,14 +104,6 @@ export function MesocycleEditWizard({
   );
   const [saving, setSaving] = useState(false);
   const [existingWorkouts, setExistingWorkouts] = useState<number>(0);
-  const [workouts, setWorkouts] = useState<
-    Array<{
-      id: string;
-      scheduled_for: string;
-      label: string;
-      week_number?: number;
-    }>
-  >([]);
 
   const form = useForm<MesocycleFormData>({
     resolver: zodResolver(mesocycleSchema),
@@ -123,6 +115,82 @@ export function MesocycleEditWizard({
   });
 
   logger.log('[MesocycleWizard] Current step:', currentStep);
+
+  const loadExistingWorkoutTemplates = useCallback(
+    async (supabase: ReturnType<typeof createClient>) => {
+      try {
+        // Get all workouts with their exercises for this mesocycle
+        const { data: workouts } = await supabase
+          .from('workouts')
+          .select(
+            `
+          *,
+          workout_exercises (
+            *,
+            exercises (name)
+          )
+        `,
+          )
+          .eq('mesocycle_id', mesocycleId)
+          .order('scheduled_for', { ascending: true });
+
+        if (!workouts || workouts.length === 0) return;
+
+        // Group workouts by their label pattern to reconstruct templates
+        const templateMap = new Map<string, WorkoutTemplate>();
+
+        workouts.forEach((workout) => {
+          // Extract base label (remove " - Week X" suffix)
+          const baseLabel =
+            workout.label?.replace(/ - Week \d+$/, '') || 'Workout';
+
+          // Get day of week from scheduled_for
+          const workoutDate = parseLocalDate(workout.scheduled_for);
+          const dayOfWeek = workoutDate.getDay();
+
+          if (!templateMap.has(baseLabel)) {
+            templateMap.set(baseLabel, {
+              id: crypto.randomUUID(),
+              label: baseLabel,
+              dayOfWeek: [dayOfWeek],
+              exercises: workout.workout_exercises.map((we, idx: number) => ({
+                exerciseId: we.exercise_id,
+                exerciseName: we.exercises.name,
+                orderIdx: we.order_idx || idx,
+                defaults: we.defaults || {
+                  sets: 3,
+                  reps: '8-12',
+                  rir: 2,
+                  rest: '2:00',
+                },
+              })),
+            });
+          } else {
+            // Add this day of week if not already included
+            const template = templateMap.get(baseLabel)!;
+            if (!template.dayOfWeek.includes(dayOfWeek)) {
+              template.dayOfWeek.push(dayOfWeek);
+              template.dayOfWeek.sort();
+            }
+          }
+        });
+
+        const templates = Array.from(templateMap.values());
+        setWorkoutTemplates(templates);
+        logger.log(
+          '[MesocycleEditWizard] Loaded',
+          templates.length,
+          'templates from existing workouts',
+        );
+      } catch (error) {
+        logger.error(
+          '[MesocycleEditWizard] Error loading workout templates:',
+          error,
+        );
+      }
+    },
+    [mesocycleId, setWorkoutTemplates],
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -163,15 +231,12 @@ export function MesocycleEditWizard({
         .eq('mesocycle_id', mesocycleId);
       setExistingWorkouts(count || 0);
 
-      const { data: workoutData } = await supabase
-        .from('workouts')
-        .select('id, scheduled_for, label, week_number')
-        .eq('mesocycle_id', mesocycleId)
-        .order('scheduled_for', { ascending: true });
-      setWorkouts(workoutData || []);
+      // Load existing workouts and convert to templates
+      await loadExistingWorkoutTemplates(supabase);
     };
     loadData();
-  }, [mesocycleId, router, form]);
+  }, [mesocycleId, router, form, loadExistingWorkoutTemplates]);
+
   const nextStep = () => {
     if (currentStep === 0) {
       // Validate basic info before proceeding
@@ -462,33 +527,6 @@ export function MesocycleEditWizard({
       case 1:
         return (
           <>
-            {workouts.length > 0 && (
-              <Card className="mb-4">
-                <CardHeader>
-                  <CardTitle>Existing Workouts</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {workouts.map((w) => (
-                    <div
-                      key={w.id}
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div>
-                        <p className="font-medium">{w.label}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(parseLocalDate(w.scheduled_for), 'PPP')}
-                        </p>
-                      </div>
-                      {w.week_number && (
-                        <Badge variant="secondary" className="text-xs">
-                          Week {w.week_number}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
             {existingWorkouts > 0 && (
               <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
