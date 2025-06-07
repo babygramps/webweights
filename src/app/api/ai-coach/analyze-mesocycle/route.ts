@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       targetType: 'mesocycle',
       targetId: mesocycleId,
       insight: analysis,
-      score: analysis.progressScore,
+      score: String(analysis.progressScore),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expires in 7 days
     });
 

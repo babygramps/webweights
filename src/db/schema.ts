@@ -44,6 +44,9 @@ export const workouts = pgTable('workouts', {
   label: text('label'),
   weekNumber: integer('week_number'), // NEW: which week of the mesocycle
   intensityModifier: jsonb('intensity_modifier'), // NEW: IntensityParameters for this week
+  templateVersion: integer('template_version').default(1),
+  templateId: text('template_id'),
+  lastModified: timestamp('last_modified', { withTimezone: true }).defaultNow(),
 });
 
 // Exercises table
@@ -70,6 +73,8 @@ export const workoutExercises = pgTable('workout_exercises', {
   defaults: jsonb('defaults'), // sets, reps, rir/rpe, rest
   weekOverrides: jsonb('week_overrides'), // NEW: exercise-specific progression overrides
   exerciseProgression: jsonb('exercise_progression'), // NEW: ExerciseSpecificProgression
+  templateVersion: integer('template_version').default(1),
+  isTemplateDerived: boolean('is_template_derived').default(true),
 });
 
 // Sets logged table
@@ -162,4 +167,19 @@ export const aiCoachActions = pgTable('ai_coach_actions', {
   error: text('error'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
+});
+
+// Template changes history table
+export const templateChanges = pgTable('template_changes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  mesocycleId: uuid('mesocycle_id').references(() => mesocycles.id, {
+    onDelete: 'cascade',
+  }),
+  changeType: text('change_type').notNull(),
+  affectedWorkouts: jsonb('affected_workouts'),
+  oldValue: jsonb('old_value'),
+  newValue: jsonb('new_value'),
+  appliedFromDate: date('applied_from_date'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  createdBy: uuid('created_by'),
 });
