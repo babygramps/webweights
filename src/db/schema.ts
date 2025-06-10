@@ -18,6 +18,7 @@ export const mesocycles = pgTable('mesocycles', {
   title: text('title').notNull(),
   startDate: date('start_date').notNull(),
   weeks: integer('weeks').notNull(),
+  isDefault: boolean('is_default').default(false),
 });
 
 // NEW: Mesocycle progressions table
