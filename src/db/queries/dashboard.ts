@@ -12,7 +12,10 @@ import { parseLocalDate } from '@/lib/utils/date';
 export interface DashboardOverview {
   currentWeek: number | null;
   totalWorkouts: number;
-  nextWorkout?: string;
+  nextWorkout?: {
+    id: string;
+    label: string;
+  };
   personalRecords: number;
   recentWorkouts: Awaited<ReturnType<typeof getRecentWorkouts>>;
 }
@@ -20,19 +23,33 @@ export interface DashboardOverview {
 export async function getDashboardOverview(
   userId: string,
 ): Promise<DashboardOverview> {
-  const [mesocycle] = await db
+  // Try to fetch the user's default mesocycle first
+  let [mesocycle] = await db
     .select({
       id: mesocycles.id,
       startDate: mesocycles.startDate,
       weeks: mesocycles.weeks,
     })
     .from(mesocycles)
-    .where(eq(mesocycles.userId, userId))
-    .orderBy(desc(mesocycles.startDate))
+    .where(and(eq(mesocycles.userId, userId), eq(mesocycles.isDefault, true)))
     .limit(1);
 
+  // Fallback: newest program if no default set yet
+  if (!mesocycle) {
+    [mesocycle] = await db
+      .select({
+        id: mesocycles.id,
+        startDate: mesocycles.startDate,
+        weeks: mesocycles.weeks,
+      })
+      .from(mesocycles)
+      .where(eq(mesocycles.userId, userId))
+      .orderBy(desc(mesocycles.startDate))
+      .limit(1);
+  }
+
   let currentWeek: number | null = null;
-  let nextWorkoutLabel: string | undefined;
+  let nextWorkoutInfo: { id: string; label: string } | undefined;
 
   if (mesocycle) {
     const startDate = parseLocalDate(String(mesocycle.startDate));
@@ -41,7 +58,7 @@ export async function getDashboardOverview(
 
     const today = startOfDay(new Date()).toISOString().split('T')[0];
     const [nextWorkout] = await db
-      .select({ label: workouts.label })
+      .select({ id: workouts.id, label: workouts.label })
       .from(workouts)
       .where(
         and(
@@ -53,20 +70,23 @@ export async function getDashboardOverview(
       .limit(1);
 
     if (nextWorkout) {
-      nextWorkoutLabel = nextWorkout.label ?? undefined;
+      nextWorkoutInfo = {
+        id: nextWorkout.id,
+        label: nextWorkout.label ?? 'Workout',
+      };
     }
   }
 
   const [recentWorkouts, completion, personalRecords] = await Promise.all([
     getRecentWorkouts(userId, 3),
-    getWorkoutCompletionRate(userId),
+    getWorkoutCompletionRate(userId, mesocycle?.id),
     getPersonalRecords(userId),
   ]);
 
   return {
     currentWeek,
     totalWorkouts: completion.totalWorkouts,
-    nextWorkout: nextWorkoutLabel,
+    nextWorkout: nextWorkoutInfo,
     personalRecords: personalRecords.length,
     recentWorkouts,
   };

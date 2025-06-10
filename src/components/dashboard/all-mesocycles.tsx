@@ -16,6 +16,7 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { parseLocalDate } from '@/lib/utils/date';
+import { useRouter } from 'next/navigation';
 
 interface Mesocycle {
   id: string;
@@ -28,6 +29,7 @@ interface Mesocycle {
 export function AllMesocycles() {
   const [mesocycles, setMesocycles] = useState<Mesocycle[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMesocycles = async () => {
@@ -110,6 +112,9 @@ export function AllMesocycles() {
 
       // Notify other components that the default changed
       window.dispatchEvent(new Event('default-mesocycle-changed'));
+
+      // Refresh server components (Quick Stats, etc.)
+      router.refresh();
     } catch (err) {
       const error = err as Error;
       logger.error('[AllMesocycles] Error setting default', error);

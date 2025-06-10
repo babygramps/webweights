@@ -1,44 +1,47 @@
 import logger from '@/lib/logger';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import postgres, { Sql } from 'postgres';
 import * as schema from './schema';
 
-const connectionString = process.env.DATABASE_URL;
+// ---------------------------------------------------------------------------
+// Create / reuse a single postgres.js pool per Node.js process.
+// This prevents "Max client connections reached" errors by ensuring we only
+// open a handful of connections that pgBouncer (port 6543) can multiplex.
+// ---------------------------------------------------------------------------
 
-if (!connectionString) {
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
   logger.error('❌ CRITICAL ERROR: DATABASE_URL is not set');
-  logger.error('Available environment variables:');
-  logger.error(Object.keys(process.env).sort());
-  throw new Error(
-    'DATABASE_URL is not set - Check your environment variables configuration',
-  );
+  throw new Error('DATABASE_URL is not set');
 }
 
-logger.log('✅ DATABASE_URL found, attempting connection...');
+// Use a typed global to store the pool between hot-reloads (Next.js / Vite)
+// and between lambda cold starts (if supported by the environment).
 
-// Create a postgres connection with error handling
-let client: postgres.Sql;
-try {
-  client = postgres(connectionString, {
+const globalForDb = globalThis as unknown as {
+  sql?: Sql;
+  db?: ReturnType<typeof drizzle>;
+};
+
+if (!globalForDb.sql) {
+  logger.log('🌱 Creating new postgres.js pool');
+
+  globalForDb.sql = postgres(DATABASE_URL, {
+    max: 5, // <= Supabase free tier limit; adjust as you need
+    idle_timeout: 60, // seconds before idle connection is closed
+    connect_timeout: 30, // seconds to wait for initial connection
     onnotice: (notice) => logger.log('DB Notice:', notice),
   });
-  logger.log('✅ Database client created successfully');
-} catch (error) {
-  logger.error('❌ Failed to create database client:', error);
-  throw error;
+
+  globalForDb.db = drizzle(globalForDb.sql, { schema });
+
+  logger.log('✅ Postgres pool & Drizzle ORM initialised');
+} else {
+  logger.log('♻️  Reusing existing Postgres pool');
 }
 
-// Create the drizzle instance with error handling
-let db: ReturnType<typeof drizzle>;
-try {
-  db = drizzle(client, { schema });
-  logger.log('✅ Drizzle ORM initialized successfully');
-} catch (error) {
-  logger.error('❌ Failed to initialize Drizzle ORM:', error);
-  throw error;
-}
+export const db = globalForDb.db!;
 
-export { db };
-
-// Export schema for convenience
+// Re-export schema for convenience
 export * from './schema';
