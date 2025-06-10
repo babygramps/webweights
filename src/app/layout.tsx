@@ -3,6 +3,8 @@ import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { UserPreferencesProvider } from '@/lib/contexts/UserPreferencesContext';
 import { ThemeProvider } from 'next-themes';
+import { CoachProvider } from '@/components/ai-coach/CoachProvider';
+import { CoachButton } from '@/components/ai-coach/CoachButton';
 
 // Google Fonts are disabled in CI due to network restrictions.
 // Use system fonts instead to ensure builds succeed offline.
@@ -21,7 +23,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased font-sans">
         <ThemeProvider attribute="class" defaultTheme="light">
-          <UserPreferencesProvider>{children}</UserPreferencesProvider>
+          <UserPreferencesProvider>
+            <CoachProvider>
+              {children}
+              <CoachButton />
+            </CoachProvider>
+          </UserPreferencesProvider>
         </ThemeProvider>
         <Toaster position="top-center" richColors />
       </body>

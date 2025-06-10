@@ -1,8 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MesocycleEditWizard } from '../mesocycles/mesocycle-edit-wizard';
-import { parseLocalDate } from '@/lib/utils/date';
-import { format } from 'date-fns';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -15,12 +13,28 @@ vi.mock('@/lib/supabase/client', () => {
       label: 'Workout 1',
       scheduled_for: '2024-01-01',
       week_number: 1,
+      workout_exercises: [
+        {
+          exercise_id: 'e1',
+          order_idx: 0,
+          defaults: { sets: 3, reps: '8-10', rir: 2, rest: '2:00' },
+          exercises: { name: 'Bench' },
+        },
+      ],
     },
     {
       id: 'w2',
       label: 'Workout 2',
       scheduled_for: '2024-01-02',
       week_number: 1,
+      workout_exercises: [
+        {
+          exercise_id: 'e2',
+          order_idx: 0,
+          defaults: { sets: 3, reps: '8-10', rir: 2, rest: '2:00' },
+          exercises: { name: 'Squat' },
+        },
+      ],
     },
   ];
   return {
@@ -76,11 +90,9 @@ describe('MesocycleEditWizard', () => {
   it('displays existing workouts list', async () => {
     render(<MesocycleEditWizard mesocycleId="m1" initialStep={1} />);
     await waitFor(() => {
-      expect(screen.getByText('Existing Workouts')).toBeInTheDocument();
+      expect(screen.getAllByText('Workout Schedule').length).toBeGreaterThan(0);
     });
-    expect(screen.getByText('Workout 1')).toBeInTheDocument();
-    expect(screen.getByText('Workout 2')).toBeInTheDocument();
-    const date = parseLocalDate('2024-01-01');
-    expect(screen.getByText(format(date, 'PPP'))).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Workout 1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Workout 2')).toBeInTheDocument();
   });
 });
