@@ -6,9 +6,20 @@ export async function getWorkoutsInRange(
   userId: string,
   start: Date,
   end: Date,
+  mesocycleId?: string,
 ) {
   const startDate = start.toISOString().split('T')[0];
   const endDate = end.toISOString().split('T')[0];
+
+  const conditions = [
+    eq(mesocycles.userId, userId),
+    gte(workouts.scheduledFor, startDate),
+    lte(workouts.scheduledFor, endDate),
+  ];
+
+  if (mesocycleId) {
+    conditions.push(eq(mesocycles.id, mesocycleId));
+  }
 
   return db
     .select({
@@ -20,12 +31,6 @@ export async function getWorkoutsInRange(
     })
     .from(workouts)
     .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
-    .where(
-      and(
-        eq(mesocycles.userId, userId),
-        gte(workouts.scheduledFor, startDate),
-        lte(workouts.scheduledFor, endDate),
-      ),
-    )
+    .where(and(...conditions))
     .orderBy(workouts.scheduledFor);
 }
