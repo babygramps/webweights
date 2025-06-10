@@ -407,3 +407,45 @@ export async function getUserExercises(userId: string) {
     throw error;
   }
 }
+
+// Get exercise distribution within a given muscle group
+export async function getExerciseDistributionByMuscle(
+  userId: string,
+  muscleGroup: string,
+  months = 1,
+) {
+  logger.log(
+    `[stats] Fetching exercise distribution for user: ${userId}, muscle: ${muscleGroup}, months: ${months}`,
+  );
+
+  try {
+    const startDate = subMonths(new Date(), months);
+
+    const distribution = await db
+      .select({
+        exerciseName: exercises.name,
+        setCount: sql<number>`count(${setsLogged.id})`,
+        totalVolume: sql<number>`sum(${setsLogged.weight} * ${setsLogged.reps})`,
+      })
+      .from(setsLogged)
+      .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(
+        and(
+          eq(mesocycles.userId, userId),
+          eq(exercises.primaryMuscle, muscleGroup),
+          gte(workouts.scheduledFor, startDate.toISOString().split('T')[0]),
+        ),
+      )
+      .groupBy(exercises.name);
+
+    logger.log(
+      `[stats] Found distribution for ${distribution.length} exercises in muscle group ${muscleGroup}`,
+    );
+    return distribution;
+  } catch (error) {
+    logger.error('[stats] Error fetching exercise distribution:', error);
+    throw error;
+  }
+}

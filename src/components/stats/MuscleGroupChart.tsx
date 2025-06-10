@@ -16,6 +16,8 @@ import {
   Tooltip,
 } from 'recharts';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface MuscleGroupData {
   primaryMuscle: string;
@@ -31,6 +33,7 @@ interface MuscleGroupChartProps {
   title?: string;
   description?: string;
   dataKey?: 'setCount' | 'totalVolume';
+  months?: number;
 }
 
 const COLORS = [
@@ -82,11 +85,50 @@ export function MuscleGroupChart({
   title = 'Muscle Group Distribution',
   description = 'Training volume by muscle group',
   dataKey = 'setCount',
+  months = 1,
 }: MuscleGroupChartProps) {
   const { convertWeight } = useUserPreferences();
 
+  const [drilldown, setDrilldown] = useState<{
+    muscle: string;
+    data: MuscleGroupData[];
+  } | null>(null);
+  const [loadingDrill, setLoadingDrill] = useState(false);
+
+  const handleSliceClick = async (entry: MuscleGroupData) => {
+    if (drilldown || loadingDrill) return; // Prevent nested clicks
+    const muscle = entry.primaryMuscle || 'Unknown';
+    try {
+      setLoadingDrill(true);
+      const res = await fetch(
+        `/api/stats/exercise-distribution?muscleGroup=${encodeURIComponent(
+          muscle,
+        )}&months=${months}`,
+      );
+      const json = await res.json();
+      const dist = (json.data || []) as Array<{
+        exerciseName: string;
+        setCount: number;
+        totalVolume: number;
+      }>;
+
+      const transformed: MuscleGroupData[] = dist.map((d) => ({
+        primaryMuscle: muscle,
+        name: d.exerciseName,
+        setCount: d.setCount,
+        totalVolume: d.totalVolume,
+      }));
+
+      setDrilldown({ muscle, data: transformed });
+    } finally {
+      setLoadingDrill(false);
+    }
+  };
+
+  const baseData = drilldown ? drilldown.data : data;
+
   // Filter out invalid data and calculate percentages
-  const validData = data.filter((item) => {
+  const validData = baseData.filter((item) => {
     const value = item[dataKey];
     return value != null && !isNaN(value) && value > 0;
   });
@@ -125,7 +167,7 @@ export function MuscleGroupChart({
 
     return {
       ...item,
-      name: item.primaryMuscle || 'Other',
+      name: item.name ?? item.primaryMuscle ?? 'Other',
       value,
       percentage: percentage.toFixed(1),
     };
@@ -134,33 +176,62 @@ export function MuscleGroupChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>
+              {drilldown ? `Exercises for ${drilldown.muscle}` : title}
+            </CardTitle>
+            <CardDescription>
+              {drilldown ? 'Volume by exercise' : description}
+            </CardDescription>
+          </div>
+          {drilldown && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDrilldown(null)}
+            >
+              Back
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderCustomLabel}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        {loadingDrill ? (
+          <div className="flex items-center justify-center h-[300px]">
+            Loading…
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomLabel}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                onClick={(data, index) => {
+                  if (!drilldown) {
+                    handleSliceClick(chartData[index]);
+                  }
+                }}
+                cursor={drilldown ? 'default' : 'pointer'}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );
