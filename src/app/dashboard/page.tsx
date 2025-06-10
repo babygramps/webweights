@@ -1,4 +1,5 @@
 import { ActiveMesocycle } from '@/components/dashboard/active-mesocycle';
+import { AllMesocycles } from '@/components/dashboard/all-mesocycles';
 import {
   Card,
   CardContent,
@@ -152,6 +153,11 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* All Mesocycles */}
+      <div className="mt-8">
+        <AllMesocycles />
+      </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">

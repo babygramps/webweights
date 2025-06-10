@@ -153,17 +153,27 @@ export function MesocycleEditWizard({
               id: crypto.randomUUID(),
               label: baseLabel,
               dayOfWeek: [dayOfWeek],
-              exercises: workout.workout_exercises.map((we, idx: number) => ({
-                exerciseId: we.exercise_id,
-                exerciseName: we.exercises.name,
-                orderIdx: we.order_idx || idx,
-                defaults: we.defaults || {
-                  sets: 3,
-                  reps: '8-12',
-                  rir: 2,
-                  rest: '2:00',
-                },
-              })),
+              exercises: workout.workout_exercises.map(
+                (
+                  we: {
+                    exercise_id: string;
+                    order_idx: number | null;
+                    defaults?: unknown;
+                    exercises: { name: string };
+                  },
+                  idx: number,
+                ) => ({
+                  exerciseId: we.exercise_id,
+                  exerciseName: we.exercises.name,
+                  orderIdx: we.order_idx || idx,
+                  defaults: we.defaults || {
+                    sets: 3,
+                    reps: '8-12',
+                    rir: 2,
+                    rest: '2:00',
+                  },
+                }),
+              ),
             });
           } else {
             // Add this day of week if not already included

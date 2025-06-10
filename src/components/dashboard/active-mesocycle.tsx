@@ -48,6 +48,21 @@ export function ActiveMesocycle() {
 
   useEffect(() => {
     fetchActiveMesocycle();
+
+    const handler = () => {
+      logger.log('[ActiveMesocycle] Default mesocycle changed – refetching');
+      fetchActiveMesocycle();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('default-mesocycle-changed', handler);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('default-mesocycle-changed', handler);
+      }
+    };
   }, []);
 
   const fetchActiveMesocycle = async () => {
@@ -64,8 +79,8 @@ export function ActiveMesocycle() {
         return;
       }
 
-      // Get the most recent mesocycle
-      const { data: mesocycles, error } = await supabase
+      // Try to fetch the user's default mesocycle first
+      let { data: mesocycles, error } = await supabase
         .from('mesocycles')
         .select(
           `
@@ -80,9 +95,33 @@ export function ActiveMesocycle() {
         `,
         )
         .eq('user_id', user.id)
-        .order('start_date', { ascending: false })
-        .limit(1)
+        .eq('is_default', true)
         .single();
+
+      // If no default found, fall back to the most recent mesocycle
+      if (error?.code === 'PGRST116' || !mesocycles) {
+        const fallback = await supabase
+          .from('mesocycles')
+          .select(
+            `
+            *,
+            workouts (
+              id,
+              scheduled_for,
+              label,
+              week_number,
+              intensity_modifier
+            )
+          `,
+          )
+          .eq('user_id', user.id)
+          .order('start_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        mesocycles = fallback.data as typeof mesocycles;
+        error = fallback.error;
+      }
 
       if (error) {
         if (error.code === 'PGRST116') {

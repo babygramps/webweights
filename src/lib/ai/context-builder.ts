@@ -11,7 +11,7 @@ import { subDays } from 'date-fns';
 import type { UserContext, CoachContext } from '@/types/ai-coach';
 
 export class ContextBuilder {
-  async buildSystemPrompt(context: CoachContext): string {
+  async buildSystemPrompt(context: CoachContext): Promise<string> {
     const basePrompt = `You are an expert AI weightlifting coach with deep knowledge of strength training, periodization, and exercise science. You help users optimize their training through personalized advice and data-driven insights.
 
 Current context:
