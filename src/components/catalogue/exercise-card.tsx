@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dumbbell, Activity, Target } from 'lucide-react';
@@ -10,6 +11,7 @@ interface Exercise {
   type: string;
   primary_muscle: string;
   tags: string[];
+  description?: string | null;
 }
 
 interface ExerciseCardProps {
@@ -30,9 +32,43 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
   const Icon = typeIcons[exercise.type as keyof typeof typeIcons] || Dumbbell;
 
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const handleToggle = () => {
+    setIsFlipped((prev) => !prev);
+  };
+
+  if (isFlipped) {
+    return (
+      <Card
+        onClick={handleToggle}
+        className="hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col"
+      >
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-lg line-clamp-2 capitalize">
+              {exercise.name}
+            </CardTitle>
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1">
+          <p className="text-sm text-muted-foreground whitespace-pre-line">
+            {exercise.description || 'No description available.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (variant === 'list') {
     return (
-      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+      <Card
+        className="hover:shadow-md transition-shadow cursor-pointer"
+        onClick={handleToggle}
+      >
         <CardContent className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-4">
             <div className="bg-primary/10 p-2 rounded-lg">
@@ -64,7 +100,10 @@ export function ExerciseCard({
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+    <Card
+      className="hover:shadow-md transition-shadow cursor-pointer h-full"
+      onClick={handleToggle}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg line-clamp-2">

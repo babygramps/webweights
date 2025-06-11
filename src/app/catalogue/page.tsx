@@ -15,6 +15,7 @@ interface Exercise {
   primary_muscle: string;
   tags: string[];
   equipment_detail?: string | null;
+  description?: string | null;
 }
 
 export default function CataloguePage() {
