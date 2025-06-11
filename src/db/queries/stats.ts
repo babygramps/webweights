@@ -1,7 +1,7 @@
 import logger from '@/lib/logger';
 import { db } from '../index';
 import { setsLogged, workouts, exercises, mesocycles } from '../schema';
-import { eq, desc, and, gte, sql, SQL } from 'drizzle-orm';
+import { eq, desc, and, gte, lte, sql, SQL } from 'drizzle-orm';
 import { subMonths } from 'date-fns';
 
 // Get recent workouts for a user
@@ -446,6 +446,88 @@ export async function getExerciseDistributionByMuscle(
     return distribution;
   } catch (error) {
     logger.error('[stats] Error fetching exercise distribution:', error);
+    throw error;
+  }
+}
+
+// Get muscle group distribution between explicit dates (inclusive)
+export async function getMuscleGroupDistributionBetweenDates(
+  userId: string,
+  from: string,
+  to: string,
+) {
+  logger.log(
+    `[stats] Fetching muscle group distribution for user: ${userId}, range: ${from} -> ${to}`,
+  );
+
+  try {
+    const distribution = await db
+      .select({
+        primaryMuscle: exercises.primaryMuscle,
+        setCount: sql<number>`count(${setsLogged.id})`,
+        totalVolume: sql<number>`sum(${setsLogged.weight} * ${setsLogged.reps})`,
+      })
+      .from(setsLogged)
+      .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(
+        and(
+          eq(mesocycles.userId, userId),
+          gte(workouts.scheduledFor, from),
+          lte(workouts.scheduledFor, to),
+        ),
+      )
+      .groupBy(exercises.primaryMuscle);
+
+    return distribution;
+  } catch (error) {
+    logger.error(
+      '[stats] Error fetching muscle group distribution (range):',
+      error,
+    );
+    throw error;
+  }
+}
+
+// Get exercise distribution by muscle group between explicit dates
+export async function getExerciseDistributionByMuscleBetweenDates(
+  userId: string,
+  muscleGroup: string,
+  from: string,
+  to: string,
+) {
+  logger.log(
+    `[stats] Fetching exercise distribution for user: ${userId}, muscle: ${muscleGroup}, range: ${from} -> ${to}`,
+  );
+
+  try {
+    const distribution = await db
+      .select({
+        exerciseName: exercises.name,
+        setCount: sql<number>`count(${setsLogged.id})`,
+        totalVolume: sql<number>`sum(${setsLogged.weight} * ${setsLogged.reps})`,
+      })
+      .from(setsLogged)
+      .innerJoin(exercises, eq(setsLogged.exerciseId, exercises.id))
+      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+      .where(
+        and(
+          eq(mesocycles.userId, userId),
+          eq(exercises.primaryMuscle, muscleGroup),
+          gte(workouts.scheduledFor, from),
+          lte(workouts.scheduledFor, to),
+        ),
+      )
+      .groupBy(exercises.name);
+
+    return distribution;
+  } catch (error) {
+    logger.error(
+      '[stats] Error fetching exercise distribution (range):',
+      error,
+    );
     throw error;
   }
 }

@@ -32,6 +32,7 @@ export async function getDashboardOverview(
     })
     .from(mesocycles)
     .where(and(eq(mesocycles.userId, userId), eq(mesocycles.isDefault, true)))
+    .orderBy(desc(mesocycles.startDate))
     .limit(1);
 
   // Fallback: newest program if no default set yet

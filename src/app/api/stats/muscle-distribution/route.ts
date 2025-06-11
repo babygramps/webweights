@@ -1,27 +1,20 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
-  getExerciseDistributionByMuscle,
-  getExerciseDistributionByMuscleBetweenDates,
+  getMuscleGroupDistribution,
+  getMuscleGroupDistributionBetweenDates,
 } from '@/db/queries/stats';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
-    const muscleGroup = searchParams.get('muscleGroup');
     const from = searchParams.get('from');
     const to = searchParams.get('to');
+
     const monthsParam = searchParams.get('months');
     const months = monthsParam ? parseInt(monthsParam, 10) : 1;
 
-    if (!muscleGroup) {
-      return NextResponse.json(
-        { error: 'muscleGroup is required' },
-        { status: 400 },
-      );
-    }
-
-    // Get current user via Supabase auth
+    // Auth
     const supabase = await createClient();
     const {
       data: { user },
@@ -34,23 +27,19 @@ export async function GET(req: NextRequest) {
     let distribution;
     if (from) {
       const toDate = to ?? new Date().toISOString().split('T')[0];
-      distribution = await getExerciseDistributionByMuscleBetweenDates(
+      distribution = await getMuscleGroupDistributionBetweenDates(
         user.id,
-        muscleGroup,
         from,
         toDate,
       );
     } else {
-      distribution = await getExerciseDistributionByMuscle(
-        user.id,
-        muscleGroup,
-        months,
-      );
+      const monthsClamped = Number.isNaN(months) || months < 1 ? 1 : months;
+      distribution = await getMuscleGroupDistribution(user.id, monthsClamped);
     }
 
     return NextResponse.json({ data: distribution });
-  } catch (err) {
-    console.error('[exercise-distribution] Error:', err);
+  } catch (error) {
+    console.error('[muscle-distribution] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },

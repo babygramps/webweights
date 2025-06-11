@@ -34,6 +34,8 @@ interface MuscleGroupChartProps {
   description?: string;
   dataKey?: 'setCount' | 'totalVolume';
   months?: number;
+  fromDate?: string;
+  toDate?: string;
 }
 
 const COLORS = [
@@ -86,6 +88,8 @@ export function MuscleGroupChart({
   description = 'Training volume by muscle group',
   dataKey = 'setCount',
   months = 1,
+  fromDate,
+  toDate,
 }: MuscleGroupChartProps) {
   const { convertWeight } = useUserPreferences();
 
@@ -100,10 +104,15 @@ export function MuscleGroupChart({
     const muscle = entry.primaryMuscle || 'Unknown';
     try {
       setLoadingDrill(true);
+      const params = new URLSearchParams({
+        muscleGroup: muscle,
+      });
+      if (fromDate) params.append('from', fromDate);
+      if (toDate) params.append('to', toDate);
+      else params.append('months', String(months));
+
       const res = await fetch(
-        `/api/stats/exercise-distribution?muscleGroup=${encodeURIComponent(
-          muscle,
-        )}&months=${months}`,
+        `/api/stats/exercise-distribution?${params.toString()}`,
       );
       const json = await res.json();
       const dist = (json.data || []) as Array<{

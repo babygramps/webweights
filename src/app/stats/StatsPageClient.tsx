@@ -68,10 +68,13 @@ export function StatsPageClient({
   const [exerciseProgress, setExerciseProgress] = useState<
     ExerciseProgressData[]
   >([]);
+  const [muscleDistributionData, setMuscleDistributionData] =
+    useState<MuscleGroup[]>(muscleDistribution);
 
   const muscleGroups = useMemo(
-    () => Array.from(new Set(muscleDistribution.map((m) => m.primaryMuscle))),
-    [muscleDistribution],
+    () =>
+      Array.from(new Set(muscleDistributionData.map((m) => m.primaryMuscle))),
+    [muscleDistributionData],
   );
 
   const filteredRecentWorkouts = useMemo(
@@ -90,10 +93,11 @@ export function StatsPageClient({
   );
 
   const filteredMuscleDistribution = useMemo(() => {
-    return muscleDistribution.filter((m) =>
+    const base = muscleDistributionData.filter((m) =>
       selectedMuscle ? m.primaryMuscle === selectedMuscle : true,
     );
-  }, [muscleDistribution, selectedMuscle]);
+    return base;
+  }, [muscleDistributionData, selectedMuscle]);
 
   const filteredPersonalRecords = useMemo(
     () =>
@@ -127,6 +131,48 @@ export function StatsPageClient({
       .then((data) => setExerciseProgress(data || []))
       .catch(() => setExerciseProgress([]));
   }, [selectedExercise]);
+
+  useEffect(() => {
+    if (!dateRange?.from) {
+      setMuscleDistributionData(muscleDistribution);
+      return;
+    }
+
+    const fromStr = dateRange.from.toISOString().split('T')[0];
+    const toStr = (dateRange.to ?? new Date()).toISOString().split('T')[0];
+
+    const params = new URLSearchParams({ from: fromStr, to: toStr }).toString();
+
+    const controller = new AbortController();
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`/api/stats/muscle-distribution?${params}`, {
+          signal: controller.signal,
+        });
+        const json = await res.json();
+        if (res.ok && json.data) {
+          setMuscleDistributionData(json.data as MuscleGroup[]);
+        } else {
+          setMuscleDistributionData(muscleDistribution);
+        }
+      } catch {
+        setMuscleDistributionData(muscleDistribution);
+      }
+    };
+
+    fetchData();
+
+    return () => controller.abort();
+  }, [dateRange, muscleDistribution]);
+
+  const fromDateIso = useMemo(
+    () => dateRange?.from?.toISOString().split('T')[0],
+    [dateRange],
+  );
+  const toDateIso = useMemo(
+    () => (dateRange?.to ?? new Date()).toISOString().split('T')[0],
+    [dateRange],
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -272,6 +318,8 @@ export function StatsPageClient({
               title="Training Focus"
               description="Volume distribution by muscle group"
               dataKey="totalVolume"
+              fromDate={fromDateIso}
+              toDate={toDateIso}
             />
           </div>
 
