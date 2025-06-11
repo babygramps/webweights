@@ -23,12 +23,15 @@ interface FilterBarProps {
   onTypeChange: (type: string | null) => void;
   onMuscleChange: (muscle: string | null) => void;
   onTagChange: (tag: string | null) => void;
+  onEquipmentDetailChange: (detail: string | null) => void;
+  equipmentDetails: string[];
   onViewChange: (view: 'grid' | 'list') => void;
   view: 'grid' | 'list';
   activeFilters: {
     type: string | null;
     muscle: string | null;
     tag: string | null;
+    equipmentDetail: string | null;
   };
 }
 
@@ -41,13 +44,18 @@ export function FilterBar({
   onTypeChange,
   onMuscleChange,
   onTagChange,
+  onEquipmentDetailChange,
+  equipmentDetails,
   onViewChange,
   view,
   activeFilters,
 }: FilterBarProps) {
   const [search, setSearch] = useState('');
   const hasActiveFilters =
-    activeFilters.type || activeFilters.muscle || activeFilters.tag;
+    activeFilters.type ||
+    activeFilters.muscle ||
+    activeFilters.tag ||
+    activeFilters.equipmentDetail;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -60,6 +68,7 @@ export function FilterBar({
     onTypeChange(null);
     onMuscleChange(null);
     onTagChange(null);
+    onEquipmentDetailChange(null);
   };
 
   return (
@@ -150,6 +159,28 @@ export function FilterBar({
           </SelectContent>
         </Select>
 
+        {/* Conditional machine equipment detail filter */}
+        {activeFilters.type === 'machine' && (
+          <Select
+            value={activeFilters.equipmentDetail || 'all'}
+            onValueChange={(value: string) =>
+              onEquipmentDetailChange(value === 'all' ? null : value)
+            }
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Machine Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Machines</SelectItem>
+              {equipmentDetails.map((detail) => (
+                <SelectItem key={detail} value={detail} className="capitalize">
+                  {detail}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearAllFilters}>
             <X className="h-4 w-4 mr-1" />
@@ -190,6 +221,18 @@ export function FilterBar({
               {activeFilters.tag}
               <button
                 onClick={() => onTagChange(null)}
+                className="ml-2 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {activeFilters.equipmentDetail && (
+            <Badge variant="secondary" className="capitalize">
+              <Filter className="h-3 w-3 mr-1" />
+              {activeFilters.equipmentDetail}
+              <button
+                onClick={() => onEquipmentDetailChange(null)}
                 className="ml-2 hover:text-destructive"
               >
                 <X className="h-3 w-3" />

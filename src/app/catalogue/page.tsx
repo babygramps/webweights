@@ -14,6 +14,7 @@ interface Exercise {
   type: string;
   primary_muscle: string;
   tags: string[];
+  equipment_detail?: string | null;
 }
 
 export default function CataloguePage() {
@@ -26,6 +27,7 @@ export default function CataloguePage() {
     type: null as string | null,
     muscle: null as string | null,
     tag: null as string | null,
+    equipmentDetail: null as string | null,
   });
 
   useEffect(() => {
@@ -72,6 +74,15 @@ export default function CataloguePage() {
         return false;
       }
 
+      // Equipment detail filter (only applicable for machine type)
+      if (
+        filters.equipmentDetail &&
+        exercise.type === 'machine' &&
+        exercise.equipment_detail !== filters.equipmentDetail
+      ) {
+        return false;
+      }
+
       // Muscle filter
       if (filters.muscle && exercise.primary_muscle !== filters.muscle) {
         return false;
@@ -86,9 +97,24 @@ export default function CataloguePage() {
     });
   }, [exercises, searchTerm, filters]);
 
+  // Get list of unique equipment_detail values for machine exercises
+  const machineDetails = useMemo(() => {
+    const set = new Set<string>();
+    exercises.forEach((ex) => {
+      if (ex.type === 'machine' && ex.equipment_detail) {
+        set.add(ex.equipment_detail);
+      }
+    });
+    return Array.from(set).sort();
+  }, [exercises]);
+
   const handleTypeChange = (type: string | null) => {
     logger.log('Type filter changed to:', type);
-    setFilters((prev) => ({ ...prev, type }));
+    setFilters((prev) => ({
+      ...prev,
+      type,
+      equipmentDetail: type === 'machine' ? prev.equipmentDetail : null,
+    }));
   };
 
   const handleMuscleChange = (muscle: string | null) => {
@@ -99,6 +125,11 @@ export default function CataloguePage() {
   const handleTagChange = (tag: string | null) => {
     logger.log('Tag filter changed to:', tag);
     setFilters((prev) => ({ ...prev, tag }));
+  };
+
+  const handleEquipmentDetailChange = (detail: string | null) => {
+    logger.log('Equipment detail filter changed to:', detail);
+    setFilters((prev) => ({ ...prev, equipmentDetail: detail }));
   };
 
   if (loading) {
@@ -144,6 +175,8 @@ export default function CataloguePage() {
         onTypeChange={handleTypeChange}
         onMuscleChange={handleMuscleChange}
         onTagChange={handleTagChange}
+        onEquipmentDetailChange={handleEquipmentDetailChange}
+        equipmentDetails={machineDetails}
         onViewChange={setView}
         view={view}
         activeFilters={filters}
@@ -159,7 +192,12 @@ export default function CataloguePage() {
               <button
                 onClick={() => {
                   setSearchTerm('');
-                  setFilters({ type: null, muscle: null, tag: null });
+                  setFilters({
+                    type: null,
+                    muscle: null,
+                    tag: null,
+                    equipmentDetail: null,
+                  });
                 }}
                 className="text-primary hover:underline mt-2"
               >
