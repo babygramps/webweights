@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Loader2, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { SetLogger } from './set-logger';
 import { RestTimer } from './rest-timer';
@@ -79,6 +79,9 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
   const [loggedSets, setLoggedSets] = useState<LoggedSet[]>([]);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeletingExercise, setIsDeletingExercise] = useState<string | null>(
+    null,
+  );
 
   const fetchWorkout = useCallback(async () => {
     try {
@@ -312,6 +315,53 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   };
 
+  const handleDeleteExercise = async (
+    workoutExerciseId: string,
+    exerciseId: string,
+  ) => {
+    if (!workout) return;
+
+    logger.log(`Deleting exercise ${exerciseId} from workout`, workoutId);
+    setIsDeletingExercise(workoutExerciseId);
+    try {
+      const supabase = createClient();
+
+      // Delete any logged sets for this exercise in this workout
+      const { error: setsError } = await supabase
+        .from('sets_logged')
+        .delete()
+        .eq('workout_id', workoutId)
+        .eq('exercise_id', exerciseId);
+
+      if (setsError) {
+        logger.error('Error deleting sets for exercise:', setsError);
+        throw setsError;
+      }
+
+      // Delete the exercise from the workout
+      const { error } = await supabase
+        .from('workout_exercises')
+        .delete()
+        .eq('id', workoutExerciseId);
+
+      if (error) {
+        logger.error('Error deleting exercise from workout:', error);
+        throw error;
+      }
+
+      toast.success('Exercise removed from workout');
+
+      // Refresh data
+      await fetchWorkout();
+      await fetchLoggedSets();
+    } catch (err) {
+      logger.error('Failed to delete exercise:', err);
+      toast.error('Failed to delete exercise');
+    } finally {
+      setIsDeletingExercise(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -415,18 +465,37 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
           {selectedExercise && (
             <TabsContent value={selectedExercise.id} className="mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>{selectedExercise.exercise.name}</CardTitle>
-                  <CardDescription>
-                    <div className="flex gap-2 mt-1">
-                      <Badge variant="outline">
-                        {selectedExercise.exercise.primary_muscle}
-                      </Badge>
-                      <Badge variant="outline">
-                        {selectedExercise.exercise.type}
-                      </Badge>
-                    </div>
-                  </CardDescription>
+                <CardHeader className="flex flex-row items-start justify-between">
+                  <div>
+                    <CardTitle>{selectedExercise.exercise.name}</CardTitle>
+                    <CardDescription>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant="outline">
+                          {selectedExercise.exercise.primary_muscle}
+                        </Badge>
+                        <Badge variant="outline">
+                          {selectedExercise.exercise.type}
+                        </Badge>
+                      </div>
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      handleDeleteExercise(
+                        selectedExercise.id,
+                        selectedExercise.exercise_id,
+                      )
+                    }
+                    disabled={isDeletingExercise === selectedExercise.id}
+                  >
+                    {isDeletingExercise === selectedExercise.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash className="h-4 w-4 text-destructive" />
+                    )}
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <SetsList
