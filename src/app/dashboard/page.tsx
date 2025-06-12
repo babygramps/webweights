@@ -69,9 +69,9 @@ export default async function DashboardPage() {
                   {overview.nextWorkout.label}
                 </div>
                 <p className="text-xs text-muted-foreground">scheduled today</p>
-                {overview.nextWorkout.exercises?.length > 0 && (
+                {overview.nextWorkout.exercises.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {overview.nextWorkout.exercises.map((ex) => (
+                    {overview.nextWorkout.exercises.slice(0, 4).map((ex) => (
                       <span
                         key={ex}
                         className="flex items-center gap-1 text-xs bg-muted rounded px-2 py-0.5"
@@ -80,6 +80,11 @@ export default async function DashboardPage() {
                         {ex}
                       </span>
                     ))}
+                    {overview.nextWorkout.exercises.length > 4 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{overview.nextWorkout.exercises.length - 4} more
+                      </span>
+                    )}
                   </div>
                 )}
               </CardContent>
