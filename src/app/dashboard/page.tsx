@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Plus,
   ArrowRight,
+  Dumbbell,
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -68,6 +69,19 @@ export default async function DashboardPage() {
                   {overview.nextWorkout.label}
                 </div>
                 <p className="text-xs text-muted-foreground">scheduled today</p>
+                {overview.nextWorkout.exercises?.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {overview.nextWorkout.exercises.map((ex) => (
+                      <span
+                        key={ex}
+                        className="flex items-center gap-1 text-xs bg-muted rounded px-2 py-0.5"
+                      >
+                        <Dumbbell className="h-3 w-3 text-muted-foreground" />
+                        {ex}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </Link>

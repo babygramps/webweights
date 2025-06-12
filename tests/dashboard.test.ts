@@ -28,13 +28,18 @@ vi.mock('@/db/index', () => {
 
 type QueryResult = Record<string, unknown>[];
 function createSelect(result: QueryResult) {
+  const terminalObj = {
+    where: () => ({
+      orderBy: () => ({
+        limit: () => Promise.resolve(result),
+      }),
+    }),
+  };
+
   return () => ({
     from: () => ({
-      where: () => ({
-        orderBy: () => ({
-          limit: () => Promise.resolve(result),
-        }),
-      }),
+      ...terminalObj,
+      innerJoin: () => terminalObj,
     }),
   });
 }
@@ -53,7 +58,12 @@ describe('getDashboardOverview', () => {
     selectMock.mockImplementationOnce(
       createSelect([{ id: 'm1', startDate: '2024-01-01', weeks: 4 }]),
     );
-    selectMock.mockImplementationOnce(createSelect([{ label: 'Push Day' }]));
+    selectMock.mockImplementationOnce(
+      createSelect([{ id: 'w1', label: 'Push Day' }]),
+    );
+    selectMock.mockImplementationOnce(
+      createSelect([{ name: 'Bench Press' }, { name: 'Overhead Press' }]),
+    );
 
     (getRecentWorkouts as Mock).mockResolvedValue([{ workoutId: 'w1' }]);
     (getWorkoutCompletionRate as Mock).mockResolvedValue({
@@ -66,7 +76,11 @@ describe('getDashboardOverview', () => {
     expect(result).toEqual({
       currentWeek: 2,
       totalWorkouts: 5,
-      nextWorkout: 'Push Day',
+      nextWorkout: {
+        id: 'w1',
+        label: 'Push Day',
+        exercises: ['Bench Press', 'Overhead Press'],
+      },
       personalRecords: 2,
       recentWorkouts: [{ workoutId: 'w1' }],
     });

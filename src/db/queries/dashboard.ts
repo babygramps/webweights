@@ -1,5 +1,10 @@
 import { db } from '../index';
-import { mesocycles, workouts } from '../schema';
+import {
+  mesocycles,
+  workouts,
+  workoutExercises,
+  exercises as exercisesTable,
+} from '../schema';
 import {
   getRecentWorkouts,
   getWorkoutCompletionRate,
@@ -15,6 +20,7 @@ export interface DashboardOverview {
   nextWorkout?: {
     id: string;
     label: string;
+    exercises: string[];
   };
   personalRecords: number;
   recentWorkouts: Awaited<ReturnType<typeof getRecentWorkouts>>;
@@ -50,7 +56,9 @@ export async function getDashboardOverview(
   }
 
   let currentWeek: number | null = null;
-  let nextWorkoutInfo: { id: string; label: string } | undefined;
+  let nextWorkoutInfo:
+    | { id: string; label: string; exercises: string[] }
+    | undefined;
 
   if (mesocycle) {
     const startDate = parseLocalDate(String(mesocycle.startDate));
@@ -71,9 +79,24 @@ export async function getDashboardOverview(
       .limit(1);
 
     if (nextWorkout) {
+      // Fetch up to 4 exercise names for preview
+      const exerciseRows = await db
+        .select({ name: exercisesTable.name })
+        .from(workoutExercises)
+        .innerJoin(
+          exercisesTable,
+          eq(exercisesTable.id, workoutExercises.exerciseId),
+        )
+        .where(eq(workoutExercises.workoutId, nextWorkout.id))
+        .orderBy(workoutExercises.orderIdx)
+        .limit(4);
+
+      const exerciseNames = exerciseRows.map((row) => row.name);
+
       nextWorkoutInfo = {
         id: nextWorkout.id,
         label: nextWorkout.label ?? 'Workout',
+        exercises: exerciseNames,
       };
     }
   }
