@@ -311,6 +311,48 @@ export function ActiveMesocycle() {
               </div>
             </div>
           )}
+          {upcomingWorkouts.length > 0 && (
+            <div className="pt-4 mt-4 border-t space-y-3">
+              <h3 className="text-sm font-medium">Upcoming Workouts</h3>
+
+              {upcomingWorkouts.map((workout) => (
+                <div
+                  key={workout.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <Dumbbell className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{workout.label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground">
+                          {getWorkoutDateLabel(workout.scheduled_for)}
+                        </p>
+                        {workout.week_number && (
+                          <Badge variant="secondary" className="text-xs">
+                            Week {workout.week_number}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Link href={`/logger/${workout.id}`}>
+                    <Button variant="ghost" size="icon">
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+
+              <Link href="/logger" className="block">
+                <Button variant="outline" className="w-full">
+                  View All Workouts
+                </Button>
+              </Link>
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Link href={`/mesocycles/${mesocycle.id}/edit`} className="w-full">
@@ -320,52 +362,6 @@ export function ActiveMesocycle() {
           </Link>
         </CardFooter>
       </Card>
-
-      {upcomingWorkouts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Upcoming Workouts</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {upcomingWorkouts.map((workout) => (
-              <div
-                key={workout.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <Dumbbell className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{workout.label}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {getWorkoutDateLabel(workout.scheduled_for)}
-                      </p>
-                      {workout.week_number && (
-                        <Badge variant="secondary" className="text-xs">
-                          Week {workout.week_number}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <Link href={`/logger/${workout.id}`}>
-                  <Button variant="ghost" size="icon">
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            ))}
-
-            <Link href="/logger" className="block">
-              <Button variant="outline" className="w-full">
-                View All Workouts
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

@@ -52,6 +52,41 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Next Workout (first thing users see) */}
+      <div className="mb-8">
+        {overview.nextWorkout ? (
+          <Link href={`/logger/${overview.nextWorkout.id}`} className="block">
+            <Card className="hover:bg-accent/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Next Workout
+                </CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {overview.nextWorkout.label}
+                </div>
+                <p className="text-xs text-muted-foreground">scheduled today</p>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Next Workout
+              </CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">None</div>
+              <p className="text-xs text-muted-foreground">scheduled today</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       {/* Active Mesocycle */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
@@ -86,40 +121,6 @@ export default async function DashboardPage() {
               <p className="text-xs text-muted-foreground">this mesocycle</p>
             </CardContent>
           </Card>
-
-          {overview.nextWorkout ? (
-            <Link href={`/logger/${overview.nextWorkout.id}`} className="block">
-              <Card className="hover:bg-accent/50 transition-colors">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Next Workout
-                  </CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {overview.nextWorkout.label}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    scheduled today
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Next Workout
-                </CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">None</div>
-                <p className="text-xs text-muted-foreground">scheduled today</p>
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
