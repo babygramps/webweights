@@ -42,7 +42,7 @@ export class OpenAICoachService extends BaseAICoachService {
       ? await this.contextBuilder.buildUserContext(context.userId)
       : null;
 
-    const response = await this.makeOpenAIRequest({
+    const response = (await this.makeOpenAIRequest({
       messages: [
         { role: 'system', content: systemPrompt },
         ...(userContext
@@ -56,11 +56,11 @@ export class OpenAICoachService extends BaseAICoachService {
         { role: 'user', content: message },
       ],
       stream: true,
-    });
+    })) as Response;
 
     return {
       message: '',
-      stream: response.body,
+      stream: response.body ?? undefined,
     };
   }
 
@@ -88,7 +88,7 @@ export class OpenAICoachService extends BaseAICoachService {
         icon?: string;
         category: 'training' | 'recovery' | 'analysis' | 'planning';
       }>
-    >(response);
+    >(response as string);
     return (
       actions?.map((action) => ({
         id: action.id,
@@ -131,7 +131,7 @@ export class OpenAICoachService extends BaseAICoachService {
     });
 
     return (
-      this.parseJSON<MesocycleAnalysis>(response) || {
+      this.parseJSON<MesocycleAnalysis>(response as string) || {
         mesocycleId,
         progressScore: 0,
         adherenceRate: 0,
@@ -175,7 +175,7 @@ export class OpenAICoachService extends BaseAICoachService {
     });
 
     return (
-      this.parseJSON<GeneratedMesocycle>(response) || {
+      this.parseJSON<GeneratedMesocycle>(response as string) || {
         name: 'AI Generated Mesocycle',
         duration: params.duration,
         goal: params.goal,
@@ -216,7 +216,7 @@ export class OpenAICoachService extends BaseAICoachService {
       ],
     });
 
-    return this.parseJSON<ExerciseSuggestion[]>(response) || [];
+    return this.parseJSON<ExerciseSuggestion[]>(response as string) || [];
   }
 
   async analyzeRecovery(
@@ -250,7 +250,7 @@ export class OpenAICoachService extends BaseAICoachService {
     });
 
     return (
-      this.parseJSON<RecoveryAnalysis>(response) || {
+      this.parseJSON<RecoveryAnalysis>(response as string) || {
         recoveryScore: 50,
         fatigueLevels: {
           muscular: 50,
@@ -296,7 +296,7 @@ export class OpenAICoachService extends BaseAICoachService {
       ],
     });
 
-    return this.parseJSON<WeekIntensity[]>(response) || currentPlan;
+    return this.parseJSON<WeekIntensity[]>(response as string) || currentPlan;
   }
 
   private async makeOpenAIRequest(params: {
