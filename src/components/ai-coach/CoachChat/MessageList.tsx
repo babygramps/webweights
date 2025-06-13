@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, User } from 'lucide-react';
 import type { CoachMessage } from '@/types/ai-coach';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface MessageListProps {
   messages: CoachMessage[];
@@ -52,11 +54,30 @@ function MessageItem({ message }: { message: CoachMessage }) {
       >
         <div
           className={cn(
-            'rounded-lg px-3 py-2',
+            'prose prose-invert max-w-none rounded-lg px-3 py-2',
             isUser ? 'bg-primary text-primary-foreground' : 'bg-muted',
           )}
         >
-          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          <ReactMarkdown
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore ReactMarkdown plugin type mismatch
+            remarkPlugins={[remarkGfm as unknown]}
+            components={{
+              // Prevent h1/h2 from being too large inside chat bubble
+              h1: (props) => (
+                <h4 {...props} className="text-lg font-semibold" />
+              ),
+              h2: (props) => (
+                <h5 {...props} className="text-base font-semibold" />
+              ),
+              // Ensure tables, code blocks, etc., wrap properly
+              table: (props) => (
+                <table {...props} className="w-full text-left" />
+              ),
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
         <span className="text-xs text-muted-foreground">
           {format(new Date(message.timestamp), 'HH:mm')}

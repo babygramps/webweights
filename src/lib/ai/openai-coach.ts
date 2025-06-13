@@ -26,6 +26,7 @@ export class OpenAICoachService extends BaseAICoachService {
   private maxTokens: number;
   private temperature: number;
   private contextBuilder: ContextBuilder;
+  private maxRetries = 3;
 
   constructor(config: OpenAIConfig) {
     super();
@@ -34,6 +35,12 @@ export class OpenAICoachService extends BaseAICoachService {
     this.maxTokens = config.maxTokens || 2000;
     this.temperature = config.temperature || 0.7;
     this.contextBuilder = new ContextBuilder();
+  }
+
+  private async delay(ms: number) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   }
 
   async chat(message: string, context: CoachContext): Promise<CoachResponse> {
@@ -304,30 +311,86 @@ export class OpenAICoachService extends BaseAICoachService {
     stream?: boolean;
     maxTokens?: number;
   }): Promise<Response | string> {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages: params.messages,
-        max_tokens: params.maxTokens || this.maxTokens,
-        temperature: this.temperature,
-        stream: params.stream || false,
-      }),
-    });
+    // Basic token approximation: characters / 4 (roughly 4 chars per token for English)
+    const approxPromptTokens = Math.round(
+      params.messages.reduce((len, m) => len + m.content.length, 0) / 4,
+    );
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+    const targetModel = this.model;
+    const requestedMaxTokens = params.maxTokens || this.maxTokens;
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt += 1) {
+      console.info(
+        `[OpenAI] Attempt ${attempt + 1}/${this.maxRetries} | model=${targetModel} | promptTokens≈${approxPromptTokens} | maxTokens=${requestedMaxTokens} | stream=${
+          params.stream ?? false
+        }`,
+      );
+      const response = await fetch(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: params.messages,
+            max_tokens: requestedMaxTokens,
+            temperature: this.temperature,
+            stream: params.stream || false,
+          }),
+        },
+      );
+
+      // Log rate-limit headers whenever we get a response
+      const remainingReq = response.headers.get(
+        'x-ratelimit-remaining-requests',
+      );
+      const remainingTpm = response.headers.get('x-ratelimit-remaining-tokens');
+      const reset = response.headers.get('x-ratelimit-reset-requests');
+      console.info(
+        `[OpenAI] Response status=${response.status} | remainingRPM=${remainingReq} | remainingTPM=${remainingTpm} | resetRPM=${reset}`,
+      );
+
+      if (response.ok) {
+        if (params.stream) {
+          return response;
+        }
+
+        const data = await response.json();
+        if (data?.usage) {
+          console.info(
+            `[OpenAI] Usage prompt_tokens=${data.usage.prompt_tokens} completion_tokens=${data.usage.completion_tokens} total_tokens=${data.usage.total_tokens}`,
+          );
+        }
+        return data.choices[0].message.content;
+      }
+
+      // Handle rate limiting and transient errors with retry logic
+      if (
+        [429, 502, 503, 504].includes(response.status) &&
+        attempt < this.maxRetries - 1
+      ) {
+        const backoff = 2 ** attempt * 1000 + Math.random() * 1000; // jitter
+        console.warn(
+          `OpenAI request failed with status ${response.status}. Retrying in ${Math.round(
+            backoff,
+          )}ms (attempt ${attempt + 1}/${this.maxRetries})`,
+        );
+        await this.delay(backoff);
+        continue;
+      }
+
+      // If not retried, throw an error with additional context
+      const errorText = await response.text();
+      console.error(`[OpenAI] Error body: ${errorText}`);
+      throw new Error(
+        `OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`,
+      );
     }
 
-    if (params.stream) {
-      return response;
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
+    // This point should never be reached, but TypeScript needs a return
+    throw new Error('OpenAI API error: Exhausted retries');
   }
 }

@@ -123,20 +123,56 @@ export const useAICoachStore = create<AICoachStore>()(
             }));
 
             if (reader) {
+              let buffer = '';
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value);
-                assistantContent += chunk;
+                buffer += decoder.decode(value, { stream: true });
 
-                set((state) => ({
-                  messages: state.messages.map((msg) =>
-                    msg.id === assistantMessageId
-                      ? { ...msg, content: assistantContent }
-                      : msg,
-                  ),
-                }));
+                // Process complete lines in the buffer
+                let newlineIndex: number;
+                while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+                  const line = buffer.slice(0, newlineIndex).trim();
+                  buffer = buffer.slice(newlineIndex + 1);
+
+                  if (!line) continue;
+
+                  // OpenAI streams prepend each JSON chunk with "data: "
+                  const jsonStr = line.startsWith('data:')
+                    ? line.replace(/^data:\s*/, '')
+                    : line;
+
+                  if (jsonStr === '[DONE]') {
+                    // Stream finished
+                    break;
+                  }
+
+                  try {
+                    const json = JSON.parse(jsonStr);
+                    const contentPart = json.choices?.[0]?.delta?.content ?? '';
+
+                    if (contentPart) {
+                      assistantContent += contentPart;
+
+                      // Update the assistant message incrementally
+                      set((state) => ({
+                        messages: state.messages.map((msg) =>
+                          msg.id === assistantMessageId
+                            ? { ...msg, content: assistantContent }
+                            : msg,
+                        ),
+                      }));
+                    }
+                  } catch (e) {
+                    // If parsing fails, ignore this line but log for debugging
+                    console.error(
+                      'Failed to parse AI stream chunk',
+                      e,
+                      jsonStr,
+                    );
+                  }
+                }
               }
             }
           } catch (error) {

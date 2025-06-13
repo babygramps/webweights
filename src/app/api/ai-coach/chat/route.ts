@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const aiService = new OpenAICoachService({
       apiKey,
-      model: process.env.AI_MODEL || 'gpt-4-turbo-preview',
+      model: process.env.AI_MODEL || 'gpt-4.1-nano-2025-04-14',
       maxTokens: parseInt(process.env.AI_MAX_TOKENS || '2000'),
       temperature: parseFloat(process.env.AI_TEMPERATURE || '0.7'),
     });

@@ -9,6 +9,7 @@ import {
   numeric,
   timestamp,
   interval,
+  varchar,
 } from 'drizzle-orm/pg-core';
 
 // Mesocycles table
@@ -57,6 +58,8 @@ export const exercises = pgTable('exercises', {
   type: text('type'), // barbell, machine, etc.
   primaryMuscle: text('primary_muscle'),
   tags: jsonb('tags'),
+  equipmentDetail: varchar('equipment_detail', { length: 255 }),
+  description: text('description'),
   isPublic: boolean('is_public').default(true),
   ownerId: uuid('owner_id'), // References auth.users
 });
@@ -96,6 +99,8 @@ export const setsLogged = pgTable('sets_logged', {
   isMyoRep: boolean('is_myo_rep'),
   isPartial: boolean('is_partial'),
   loggedAt: timestamp('logged_at', { withTimezone: true }).defaultNow(),
+  myoRepCount: integer('myo_rep_count'),
+  partialCount: integer('partial_count'),
   plannedWeight: numeric('planned_weight'), // NEW: what was planned vs actual
   plannedReps: integer('planned_reps'), // NEW: what was planned vs actual
   plannedRir: integer('planned_rir'), // NEW: what was planned vs actual
@@ -183,4 +188,14 @@ export const templateChanges = pgTable('template_changes', {
   appliedFromDate: date('applied_from_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   createdBy: uuid('created_by'),
+});
+
+// User preferences table
+export const userPreferences = pgTable('user_preferences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(), // References auth.users
+  weightUnit: text('weight_unit'),
+  theme: text('theme').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
