@@ -18,7 +18,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { format } from 'date-fns';
+import { formatLocalDate } from '@/lib/utils/date';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 import { calculateAverage1RM } from '@/lib/utils/1rm-calculator';
 import { useState } from 'react';
@@ -68,7 +68,7 @@ export function ExerciseProgressChart({
   const chartData: (ExerciseProgressData & { oneRm: number })[] = data.map(
     (d) => ({
       ...d,
-      date: typeof d.date === 'string' ? d.date : format(d.date, 'MMM d'),
+      date: formatLocalDate(d.date, 'MM/dd/yyyy'),
       intensity:
         d.rir !== undefined
           ? `${d.rir} RIR`

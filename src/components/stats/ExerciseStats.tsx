@@ -20,7 +20,7 @@ import { ExerciseProgressChart } from './ExerciseProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsCard } from './StatsCard';
 import { Trophy, TrendingUp, Dumbbell, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatLocalDate } from '@/lib/utils/date';
 import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
@@ -198,11 +198,11 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                     <StatsCard
                       title="Last Performed"
                       value={
-                        stats?.lastSet ? format(stats.lastSet, 'MMM d') : 'N/A'
+                        stats?.lastSet
+                          ? formatLocalDate(stats.lastSet, 'MM/dd/yyyy')
+                          : 'N/A'
                       }
-                      description={
-                        stats?.lastSet ? format(stats.lastSet, 'yyyy') : ''
-                      }
+                      description=""
                       icon={Calendar}
                     />
                   </div>

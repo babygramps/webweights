@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, TrendingUp, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatLocalDate } from '@/lib/utils/date';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 import { useState, useRef } from 'react';
 
@@ -70,9 +70,8 @@ export function PRCard({
 
   const renderWeight = (data: WeightRecord | null) => {
     if (!data) return <p className="text-sm">No data</p>;
-    const parsedDate =
-      typeof data.date === 'string' ? new Date(data.date) : data.date;
-    const formattedDate = format(parsedDate, 'PPP');
+    const parsedDate = typeof data.date === 'string' ? data.date : data.date;
+    const formattedDate = formatLocalDate(parsedDate, 'MM/dd/yyyy');
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -97,9 +96,8 @@ export function PRCard({
 
   const renderVolume = (data: VolumeRecord | null) => {
     if (!data) return <p className="text-sm">No data</p>;
-    const parsedDate =
-      typeof data.date === 'string' ? new Date(data.date) : data.date;
-    const formattedDate = format(parsedDate, 'PPP');
+    const parsedDate = typeof data.date === 'string' ? data.date : data.date;
+    const formattedDate = formatLocalDate(parsedDate, 'MM/dd/yyyy');
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -117,9 +115,8 @@ export function PRCard({
 
   const renderReps = (data: RepsRecord | null) => {
     if (!data) return <p className="text-sm">No data</p>;
-    const parsedDate =
-      typeof data.date === 'string' ? new Date(data.date) : data.date;
-    const formattedDate = format(parsedDate, 'PPP');
+    const parsedDate = typeof data.date === 'string' ? data.date : data.date;
+    const formattedDate = formatLocalDate(parsedDate, 'MM/dd/yyyy');
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">

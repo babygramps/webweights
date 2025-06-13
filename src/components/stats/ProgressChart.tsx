@@ -20,7 +20,7 @@ import {
   Legend,
   TooltipProps,
 } from 'recharts';
-import { format } from 'date-fns';
+import { formatLocalDate } from '@/lib/utils/date';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 
 interface ProgressChartData {
@@ -56,9 +56,16 @@ const CustomTooltip = ({
       typeof payloadValue === 'number'
         ? payloadValue
         : parseFloat(payloadValue || '0');
+    const formattedLabel = (() => {
+      try {
+        return formatLocalDate(label, 'MM/dd/yyyy');
+      } catch {
+        return label;
+      }
+    })();
     return (
       <div className="bg-background border rounded-lg shadow-lg p-3">
-        <p className="text-sm font-medium">{label}</p>
+        <p className="text-sm font-medium">{formattedLabel}</p>
         <p className="text-sm text-primary">
           {formatTooltip ? formatTooltip(numericValue) : payloadValue}
         </p>
@@ -80,7 +87,7 @@ export function ProgressChart({
   height = 300,
   formatXAxis = (value: string) => {
     try {
-      return format(new Date(value), 'MMM d');
+      return formatLocalDate(value, 'MM/dd/yyyy');
     } catch {
       return value;
     }

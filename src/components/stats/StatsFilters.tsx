@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CalendarIcon, Filter } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatLocalDate } from '@/lib/utils/date';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 
@@ -81,11 +81,11 @@ export function StatsFilters({
             {dateRange?.from ? (
               dateRange.to ? (
                 <>
-                  {format(dateRange.from, 'LLL dd, y')} -{' '}
-                  {format(dateRange.to, 'LLL dd, y')}
+                  {formatLocalDate(dateRange.from, 'MM/dd/yyyy')} -{' '}
+                  {formatLocalDate(dateRange.to, 'MM/dd/yyyy')}
                 </>
               ) : (
-                format(dateRange.from, 'LLL dd, y')
+                formatLocalDate(dateRange.from, 'MM/dd/yyyy')
               )
             ) : (
               <span>Pick a date range</span>

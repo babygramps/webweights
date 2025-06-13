@@ -12,7 +12,7 @@ import { ExportWorkoutsButton } from '@/components/stats/ExportWorkoutsButton';
 import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, TrendingUp, Trophy, Target } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatLocalDate } from '@/lib/utils/date';
 import { useState, useMemo, useEffect } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
@@ -260,10 +260,7 @@ export function StatsPageClient({
                         {workout.mesocycleTitle}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {format(
-                          new Date(workout.workoutDate),
-                          'EEEE, MMM d, yyyy',
-                        )}
+                        {formatLocalDate(workout.workoutDate, 'MM/dd/yyyy')}
                       </p>
                     </div>
                     <div className="text-right">
