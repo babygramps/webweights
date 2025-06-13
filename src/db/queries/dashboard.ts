@@ -88,7 +88,8 @@ export async function getDashboardOverview(
           eq(exercisesTable.id, workoutExercises.exerciseId),
         )
         .where(eq(workoutExercises.workoutId, nextWorkout.id))
-        .orderBy(workoutExercises.orderIdx);
+        .orderBy(workoutExercises.orderIdx)
+        .limit(4);
 
       const exerciseNames = exerciseRows.map((row) => row.name);
 

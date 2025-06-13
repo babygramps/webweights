@@ -1,5 +1,4 @@
 import type {
-  AICoachService,
   MesocycleAnalysis,
   GeneratedMesocycle,
   ExerciseSuggestion,
