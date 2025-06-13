@@ -88,6 +88,7 @@ describe('getDashboardOverview', () => {
 
   it('handles missing mesocycle', async () => {
     selectMock.mockImplementationOnce(createSelect([]));
+    selectMock.mockImplementationOnce(createSelect([]));
 
     (getRecentWorkouts as Mock).mockResolvedValue([]);
     (getWorkoutCompletionRate as Mock).mockResolvedValue({

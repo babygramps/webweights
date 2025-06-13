@@ -304,7 +304,19 @@ Guidelines:
     ];
     const trainedMuscles = new Set(
       exerciseHistory
-        .filter((ex) => ex.primaryMuscle)
+        .filter(
+          (
+            ex,
+          ): ex is {
+            exerciseId: string;
+            exerciseName: string;
+            primaryMuscle: string;
+            setCount: number;
+            maxWeight: number;
+            totalVolume: number;
+            avgReps: number;
+          } => Boolean(ex.primaryMuscle),
+        )
         .map((ex) => ex.primaryMuscle.toLowerCase()),
     );
 
