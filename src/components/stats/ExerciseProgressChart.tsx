@@ -29,8 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 interface ExerciseProgressData {
   date: Date | string;
@@ -39,6 +37,7 @@ interface ExerciseProgressData {
   rir?: number;
   rpe?: number;
   volume: number;
+  sets?: number;
   intensity?: string;
 }
 
@@ -58,14 +57,26 @@ export function ExerciseProgressChart({
   const { weightUnit } = useUserPreferences();
 
   const [selectedMetric, setSelectedMetric] = useState<
-    'weight' | 'reps' | 'volume' | 'oneRm'
+    'weight' | 'reps' | 'volume' | 'oneRm' | 'sets'
   >('weight');
-  const [showMovingAvg, setShowMovingAvg] = useState(false);
+  const [smoothingMethod, setSmoothingMethod] = useState<
+    | 'none'
+    | 'sma'
+    | 'ema'
+    | 'loess'
+    | 'spline'
+    | 'kalman'
+    | 'cumulative'
+    | 'aggregate'
+    | 'poly'
+    | 'smoothed1rm'
+  >('none');
 
   // Calculate averages for reference lines
   const avgWeight = data.reduce((sum, d) => sum + d.weight, 0) / data.length;
   const avgReps = data.reduce((sum, d) => sum + d.reps, 0) / data.length;
   const avgVolume = data.reduce((sum, d) => sum + d.volume, 0) / data.length;
+  const avgSets = data.reduce((sum, d) => sum + (d.sets ?? 1), 0) / data.length;
 
   // Format data for chart
   const chartData: (ExerciseProgressData & { oneRm: number })[] = data.map(
@@ -79,18 +90,128 @@ export function ExerciseProgressChart({
             ? `${d.rpe} RPE`
             : undefined,
       oneRm: calculateAverage1RM(d.weight, d.reps),
+      sets: d.sets ?? 1,
     }),
   );
 
   const avgOneRm =
     chartData.reduce((sum, d) => sum + d.oneRm, 0) / chartData.length;
 
+  // Simple Moving Average
   const movingAverage = (values: number[], window = 5) =>
     values.map((_, i) => {
       const start = Math.max(0, i - window + 1);
       const slice = values.slice(start, i + 1);
       return slice.reduce((a, b) => a + b, 0) / slice.length;
     });
+
+  // Exponential Moving Average
+  const exponentialMovingAverage = (values: number[], alpha = 0.5) => {
+    const result: number[] = [];
+    values.forEach((value, idx) => {
+      if (idx === 0) {
+        result.push(value);
+      } else {
+        result.push(alpha * value + (1 - alpha) * result[idx - 1]);
+      }
+    });
+    return result;
+  };
+
+  // Cumulative Average
+  const cumulativeAverage = (values: number[]) => {
+    const result: number[] = [];
+    values.reduce((sum, v, i) => {
+      const newSum = sum + v;
+      result[i] = newSum / (i + 1);
+      return newSum;
+    }, 0);
+    return result;
+  };
+
+  // Very simple LOESS implementation
+  const loess = (values: number[], bandwidth = 0.3) => {
+    const n = values.length;
+    return values.map((_, i) => {
+      const distances = values.map((_, j) => Math.abs(i - j));
+      const bandwidthDistance = bandwidth * n;
+      const weights = distances.map((d) => {
+        const w = 1 - Math.pow(d / bandwidthDistance, 3);
+        return w > 0 ? Math.pow(w, 3) : 0;
+      });
+      const weightedSum = values.reduce(
+        (sum, val, idx) => sum + val * weights[idx],
+        0,
+      );
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      return totalWeight ? weightedSum / totalWeight : values[i];
+    });
+  };
+
+  // Basic polynomial regression (2nd order)
+  const polynomialRegression = (values: number[], degree = 2) => {
+    const n = values.length;
+    const X: number[][] = [];
+    for (let i = 0; i < n; i++) {
+      const row = [] as number[];
+      for (let j = 0; j <= degree; j++) {
+        row.push(Math.pow(i, j));
+      }
+      X.push(row);
+    }
+    // Normal equation: (X^T X)^-1 X^T y
+    const XT = X[0].map((_, colIndex) => X.map((row) => row[colIndex]));
+    const XTX = XT.map((row) =>
+      XT[0].map((_, j) => row.reduce((sum, x, k) => sum + x * X[k][j], 0)),
+    );
+    // Invert XTX (assuming small 3x3)
+    const det =
+      XTX[0][0] * (XTX[1][1] * XTX[2][2] - XTX[1][2] * XTX[2][1]) -
+      XTX[0][1] * (XTX[1][0] * XTX[2][2] - XTX[1][2] * XTX[2][0]) +
+      XTX[0][2] * (XTX[1][0] * XTX[2][1] - XTX[1][1] * XTX[2][0]);
+    if (!det) return values;
+    const inv = [
+      [
+        (XTX[1][1] * XTX[2][2] - XTX[1][2] * XTX[2][1]) / det,
+        (XTX[0][2] * XTX[2][1] - XTX[0][1] * XTX[2][2]) / det,
+        (XTX[0][1] * XTX[1][2] - XTX[0][2] * XTX[1][1]) / det,
+      ],
+      [
+        (XTX[1][2] * XTX[2][0] - XTX[1][0] * XTX[2][2]) / det,
+        (XTX[0][0] * XTX[2][2] - XTX[0][2] * XTX[2][0]) / det,
+        (XTX[0][2] * XTX[1][0] - XTX[0][0] * XTX[1][2]) / det,
+      ],
+      [
+        (XTX[1][0] * XTX[2][1] - XTX[1][1] * XTX[2][0]) / det,
+        (XTX[0][1] * XTX[2][0] - XTX[0][0] * XTX[2][1]) / det,
+        (XTX[0][0] * XTX[1][1] - XTX[0][1] * XTX[1][0]) / det,
+      ],
+    ];
+    const XTy = XT.map((row) =>
+      row.reduce((sum, x, i) => sum + x * values[i], 0),
+    );
+    const coeffs = inv.map((row) =>
+      row.reduce((sum, v, i) => sum + v * XTy[i], 0),
+    );
+    return X.map((row) => row.reduce((sum, v, i) => sum + v * coeffs[i], 0));
+  };
+
+  // Simple 1D Kalman filter
+  const kalmanFilter = (values: number[], R = 0.01, Q = 1) => {
+    let x = values[0];
+    let p = 1;
+    const result = [x];
+    for (let i = 1; i < values.length; i++) {
+      // prediction
+      p += Q;
+      // update
+      const k = p / (p + R);
+      x = x + k * (values[i] - x);
+      p = (1 - k) * p;
+      result.push(x);
+    }
+    return result;
+  };
 
   const chartWithAvg = useMemo(() => {
     const metricKey = selectedMetric === 'oneRm' ? 'oneRm' : selectedMetric;
@@ -104,13 +225,56 @@ export function ExerciseProgressChart({
           return d.reps;
         case 'volume':
           return d.volume;
+        case 'sets':
+          return d.sets ?? 1;
         default:
           return 0;
       }
     });
-    const avg = movingAverage(values);
-    return chartData.map((d, idx) => ({ ...d, movingAvg: avg[idx] }));
-  }, [chartData, selectedMetric]);
+    let smoothed: number[] = [];
+    switch (smoothingMethod) {
+      case 'sma':
+        smoothed = movingAverage(values);
+        break;
+      case 'ema':
+        smoothed = exponentialMovingAverage(values);
+        break;
+      case 'loess':
+        smoothed = loess(values);
+        break;
+      case 'spline':
+        smoothed = polynomialRegression(values, 3);
+        break;
+      case 'kalman':
+        smoothed = kalmanFilter(values);
+        break;
+      case 'cumulative':
+        smoothed = cumulativeAverage(values);
+        break;
+      case 'aggregate':
+        // Simple weekly aggregation
+        smoothed = values.map((_, i) => {
+          const start = Math.max(0, i - 6);
+          const slice = values.slice(start, i + 1);
+          return slice.reduce((a, b) => a + b, 0) / slice.length;
+        });
+        break;
+      case 'poly':
+        smoothed = polynomialRegression(values, 2);
+        break;
+      case 'smoothed1rm':
+        smoothed = movingAverage(
+          chartData.map((d) => calculateAverage1RM(d.weight, d.reps)),
+        );
+        break;
+      default:
+        smoothed = [];
+    }
+    const result = smoothed.length
+      ? chartData.map((d, idx) => ({ ...d, movingAvg: smoothed[idx] }))
+      : chartData;
+    return result;
+  }, [chartData, selectedMetric, smoothingMethod]);
 
   const CustomTooltip = ({
     active,
@@ -131,6 +295,7 @@ export function ExerciseProgressChart({
               {entry.dataKey === 'weight' && ` ${weightUnit}`}
               {entry.dataKey === 'volume' && ` ${weightUnit}`}
               {entry.dataKey === 'oneRm' && ` ${weightUnit}`}
+              {entry.dataKey === 'sets' && ' sets'}
             </p>
           ))}
           {payloadData.intensity && (
@@ -167,16 +332,31 @@ export function ExerciseProgressChart({
                 <SelectItem value="reps">Reps</SelectItem>
                 {showVolume && <SelectItem value="volume">Volume</SelectItem>}
                 {showOneRM && <SelectItem value="oneRm">1RM</SelectItem>}
+                <SelectItem value="sets">Sets</SelectItem>
               </SelectContent>
             </Select>
-            <Label htmlFor="ma-switch" className="text-sm">
-              <Switch
-                id="ma-switch"
-                checked={showMovingAvg}
-                onCheckedChange={setShowMovingAvg}
-              />
-              Smooth
-            </Label>
+            <Select
+              value={smoothingMethod}
+              onValueChange={(v) =>
+                setSmoothingMethod(v as typeof smoothingMethod)
+              }
+            >
+              <SelectTrigger size="sm" className="w-[140px]">
+                <SelectValue placeholder="Smoothing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Smoothing</SelectItem>
+                <SelectItem value="sma">SMA</SelectItem>
+                <SelectItem value="ema">EMA</SelectItem>
+                <SelectItem value="loess">Loess</SelectItem>
+                <SelectItem value="spline">Spline</SelectItem>
+                <SelectItem value="kalman">Kalman</SelectItem>
+                <SelectItem value="cumulative">Cumulative</SelectItem>
+                <SelectItem value="aggregate">Weekly Avg</SelectItem>
+                <SelectItem value="poly">Polynomial</SelectItem>
+                <SelectItem value="smoothed1rm">Smoothed 1RM</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
@@ -209,14 +389,22 @@ export function ExerciseProgressChart({
             <YAxis
               yAxisId="right"
               orientation="right"
-              hide={!(selectedMetric === 'reps' || selectedMetric === 'volume')}
+              hide={
+                !(
+                  selectedMetric === 'reps' ||
+                  selectedMetric === 'volume' ||
+                  selectedMetric === 'sets'
+                )
+              }
               label={{
                 value:
                   selectedMetric === 'reps'
                     ? 'Reps'
                     : selectedMetric === 'volume'
                       ? `Volume (${weightUnit})`
-                      : '',
+                      : selectedMetric === 'sets'
+                        ? 'Sets'
+                        : '',
                 angle: 90,
                 position: 'insideRight',
                 className: 'text-xs',
@@ -240,7 +428,9 @@ export function ExerciseProgressChart({
                     ? avgReps
                     : selectedMetric === 'volume'
                       ? avgVolume
-                      : avgOneRm
+                      : selectedMetric === 'sets'
+                        ? avgSets
+                        : avgOneRm
               }
               stroke="#888"
               strokeDasharray="5 5"
@@ -250,7 +440,9 @@ export function ExerciseProgressChart({
                   ? avgReps
                   : selectedMetric === 'volume'
                     ? avgVolume
-                    : avgOneRm
+                    : selectedMetric === 'sets'
+                      ? avgSets
+                      : avgOneRm
               ).toFixed(1)}`}
             />
 
@@ -299,10 +491,23 @@ export function ExerciseProgressChart({
                 dot={false}
               />
             )}
-            {showMovingAvg && (
+            {selectedMetric === 'sets' && (
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="sets"
+                stroke="#f43f5e"
+                strokeWidth={1}
+                name="Sets"
+                dot={{ r: 3 }}
+              />
+            )}
+            {smoothingMethod !== 'none' && (
               <Line
                 yAxisId={
-                  selectedMetric === 'reps' || selectedMetric === 'volume'
+                  selectedMetric === 'reps' ||
+                  selectedMetric === 'volume' ||
+                  selectedMetric === 'sets'
                     ? 'right'
                     : 'left'
                 }
@@ -310,7 +515,7 @@ export function ExerciseProgressChart({
                 dataKey="movingAvg"
                 stroke="#f97316"
                 strokeWidth={2}
-                name="Moving Avg"
+                name="Trend"
                 dot={false}
               />
             )}
@@ -327,7 +532,9 @@ export function ExerciseProgressChart({
                   ? 'Max Reps'
                   : selectedMetric === 'volume'
                     ? 'Max Volume'
-                    : 'Max 1RM'}
+                    : selectedMetric === 'sets'
+                      ? 'Max Sets'
+                      : 'Max 1RM'}
             </p>
             <p className="text-lg font-semibold">
               {selectedMetric === 'weight' &&
@@ -338,6 +545,8 @@ export function ExerciseProgressChart({
                 `${Math.max(...data.map((d) => d.volume))} ${weightUnit}`}
               {selectedMetric === 'oneRm' &&
                 `${Math.max(...chartData.map((d) => d.oneRm))} ${weightUnit}`}
+              {selectedMetric === 'sets' &&
+                Math.max(...chartData.map((d) => d.sets ?? 1))}
             </p>
           </div>
           <div className="text-center">
