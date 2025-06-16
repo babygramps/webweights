@@ -29,6 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { HelpCircle } from 'lucide-react';
 
 interface ExerciseProgressData {
   date: Date | string;
@@ -71,6 +78,18 @@ export function ExerciseProgressChart({
     | 'poly'
     | 'smoothed1rm'
   >('none');
+
+  const smoothingDescriptions: Record<string, string> = {
+    sma: 'Simple Moving Average – averages the last n points',
+    ema: 'Exponential Moving Average – weights recent points more',
+    loess: 'Loess smoothing – locally weighted regression',
+    spline: 'Spline – smooth piecewise polynomial curve',
+    kalman: 'Kalman Filter – predictive filter for noisy data',
+    cumulative: 'Cumulative Average – running average over time',
+    aggregate: 'Weekly Avg – aggregates values by week',
+    poly: 'Polynomial Regression – curved trend line',
+    smoothed1rm: 'Smoothed 1RM – moving avg of est. 1RM',
+  };
 
   // Calculate averages for reference lines
   const avgWeight = data.reduce((sum, d) => sum + d.weight, 0) / data.length;
@@ -346,17 +365,65 @@ export function ExerciseProgressChart({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No Smoothing</SelectItem>
-                <SelectItem value="sma">SMA</SelectItem>
-                <SelectItem value="ema">EMA</SelectItem>
-                <SelectItem value="loess">Loess</SelectItem>
-                <SelectItem value="spline">Spline</SelectItem>
-                <SelectItem value="kalman">Kalman</SelectItem>
-                <SelectItem value="cumulative">Cumulative</SelectItem>
-                <SelectItem value="aggregate">Weekly Avg</SelectItem>
-                <SelectItem value="poly">Polynomial</SelectItem>
-                <SelectItem value="smoothed1rm">Smoothed 1RM</SelectItem>
+                <SelectItem value="sma" title={smoothingDescriptions.sma}>
+                  SMA
+                </SelectItem>
+                <SelectItem value="ema" title={smoothingDescriptions.ema}>
+                  EMA
+                </SelectItem>
+                <SelectItem value="loess" title={smoothingDescriptions.loess}>
+                  Loess
+                </SelectItem>
+                <SelectItem value="spline" title={smoothingDescriptions.spline}>
+                  Spline
+                </SelectItem>
+                <SelectItem value="kalman" title={smoothingDescriptions.kalman}>
+                  Kalman
+                </SelectItem>
+                <SelectItem
+                  value="cumulative"
+                  title={smoothingDescriptions.cumulative}
+                >
+                  Cumulative
+                </SelectItem>
+                <SelectItem
+                  value="aggregate"
+                  title={smoothingDescriptions.aggregate}
+                >
+                  Weekly Avg
+                </SelectItem>
+                <SelectItem value="poly" title={smoothingDescriptions.poly}>
+                  Polynomial
+                </SelectItem>
+                <SelectItem
+                  value="smoothed1rm"
+                  title={smoothingDescriptions.smoothed1rm}
+                >
+                  Smoothed 1RM
+                </SelectItem>
               </SelectContent>
             </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8">
+                  <HelpCircle className="size-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="text-sm space-y-1 w-72" side="bottom">
+                <p className="font-medium mb-2">Smoothing methods</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>{smoothingDescriptions.sma}</li>
+                  <li>{smoothingDescriptions.ema}</li>
+                  <li>{smoothingDescriptions.loess}</li>
+                  <li>{smoothingDescriptions.spline}</li>
+                  <li>{smoothingDescriptions.kalman}</li>
+                  <li>{smoothingDescriptions.cumulative}</li>
+                  <li>{smoothingDescriptions.aggregate}</li>
+                  <li>{smoothingDescriptions.poly}</li>
+                  <li>{smoothingDescriptions.smoothed1rm}</li>
+                </ul>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </CardHeader>
