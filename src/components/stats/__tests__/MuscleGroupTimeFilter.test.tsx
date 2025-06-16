@@ -98,12 +98,10 @@ const createProps = () => {
 
 describe('StatsPageClient - Muscle Group Time Filter', () => {
   it('fetches updated muscle distribution when date range changes', async () => {
-    const fetchMock = vi
-      .spyOn(global, 'fetch')
-      .mockResolvedValue({
-        json: () => Promise.resolve({ data: [] }),
-        ok: true,
-      } as Response);
+    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue({
+      json: () => Promise.resolve({ data: [] }),
+      ok: true,
+    } as Response);
 
     render(<StatsPageClient {...createProps()} />);
 

@@ -21,7 +21,7 @@ import {
 import { formatLocalDate } from '@/lib/utils/date';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
 import { calculateAverage1RM } from '@/lib/utils/1rm-calculator';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Select,
   SelectContent,
@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface ExerciseProgressData {
   date: Date | string;
@@ -58,6 +60,7 @@ export function ExerciseProgressChart({
   const [selectedMetric, setSelectedMetric] = useState<
     'weight' | 'reps' | 'volume' | 'oneRm'
   >('weight');
+  const [showMovingAvg, setShowMovingAvg] = useState(false);
 
   // Calculate averages for reference lines
   const avgWeight = data.reduce((sum, d) => sum + d.weight, 0) / data.length;
@@ -81,6 +84,33 @@ export function ExerciseProgressChart({
 
   const avgOneRm =
     chartData.reduce((sum, d) => sum + d.oneRm, 0) / chartData.length;
+
+  const movingAverage = (values: number[], window = 5) =>
+    values.map((_, i) => {
+      const start = Math.max(0, i - window + 1);
+      const slice = values.slice(start, i + 1);
+      return slice.reduce((a, b) => a + b, 0) / slice.length;
+    });
+
+  const chartWithAvg = useMemo(() => {
+    const metricKey = selectedMetric === 'oneRm' ? 'oneRm' : selectedMetric;
+    const values = chartData.map((d) => {
+      switch (metricKey) {
+        case 'oneRm':
+          return d.oneRm;
+        case 'weight':
+          return d.weight;
+        case 'reps':
+          return d.reps;
+        case 'volume':
+          return d.volume;
+        default:
+          return 0;
+      }
+    });
+    const avg = movingAverage(values);
+    return chartData.map((d, idx) => ({ ...d, movingAvg: avg[idx] }));
+  }, [chartData, selectedMetric]);
 
   const CustomTooltip = ({
     active,
@@ -122,26 +152,38 @@ export function ExerciseProgressChart({
             <CardTitle>{exerciseName} Progress</CardTitle>
             <CardDescription>Track your performance over time</CardDescription>
           </div>
-          <Select
-            value={selectedMetric}
-            onValueChange={(v) => setSelectedMetric(v as typeof selectedMetric)}
-          >
-            <SelectTrigger size="sm" className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="weight">Weight</SelectItem>
-              <SelectItem value="reps">Reps</SelectItem>
-              {showVolume && <SelectItem value="volume">Volume</SelectItem>}
-              {showOneRM && <SelectItem value="oneRm">1RM</SelectItem>}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-4">
+            <Select
+              value={selectedMetric}
+              onValueChange={(v) =>
+                setSelectedMetric(v as typeof selectedMetric)
+              }
+            >
+              <SelectTrigger size="sm" className="w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weight">Weight</SelectItem>
+                <SelectItem value="reps">Reps</SelectItem>
+                {showVolume && <SelectItem value="volume">Volume</SelectItem>}
+                {showOneRM && <SelectItem value="oneRm">1RM</SelectItem>}
+              </SelectContent>
+            </Select>
+            <Label htmlFor="ma-switch" className="text-sm">
+              <Switch
+                id="ma-switch"
+                checked={showMovingAvg}
+                onCheckedChange={setShowMovingAvg}
+              />
+              Smooth
+            </Label>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
-            data={chartData}
+            data={chartWithAvg}
             margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -254,6 +296,21 @@ export function ExerciseProgressChart({
                 strokeWidth={1}
                 strokeDasharray="5 5"
                 name="Volume"
+                dot={false}
+              />
+            )}
+            {showMovingAvg && (
+              <Line
+                yAxisId={
+                  selectedMetric === 'reps' || selectedMetric === 'volume'
+                    ? 'right'
+                    : 'left'
+                }
+                type="monotone"
+                dataKey="movingAvg"
+                stroke="#f97316"
+                strokeWidth={2}
+                name="Moving Avg"
                 dot={false}
               />
             )}
