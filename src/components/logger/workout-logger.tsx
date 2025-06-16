@@ -77,6 +77,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
   const [selectedExercise, setSelectedExercise] =
     useState<WorkoutExercise | null>(null);
   const [loggedSets, setLoggedSets] = useState<LoggedSet[]>([]);
+  const [lastLoggedSets, setLastLoggedSets] = useState<LoggedSet[]>([]);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingExercise, setIsDeletingExercise] = useState<string | null>(
@@ -149,10 +150,56 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   }, [workoutId]);
 
+  const fetchLastLoggedSets = useCallback(
+    async (exerciseId: string) => {
+      try {
+        logger.log('Fetching last logged sets for exercise:', exerciseId);
+        const supabase = createClient();
+
+        const { data: lastWorkout } = await supabase
+          .from('sets_logged')
+          .select('workout_id')
+          .eq('exercise_id', exerciseId)
+          .neq('workout_id', workoutId)
+          .order('logged_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!lastWorkout) {
+          setLastLoggedSets([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('sets_logged')
+          .select('*')
+          .eq('exercise_id', exerciseId)
+          .eq('workout_id', lastWorkout.workout_id)
+          .order('set_number');
+
+        if (error) {
+          logger.error('Error fetching last logged sets:', error);
+          throw error;
+        }
+
+        setLastLoggedSets(data || []);
+      } catch (err) {
+        logger.error('Failed to fetch last logged sets:', err);
+      }
+    },
+    [workoutId],
+  );
+
   useEffect(() => {
     fetchWorkout();
     fetchLoggedSets();
   }, [fetchWorkout, fetchLoggedSets]);
+
+  useEffect(() => {
+    if (selectedExercise) {
+      fetchLastLoggedSets(selectedExercise.exercise_id);
+    }
+  }, [selectedExercise, fetchLastLoggedSets]);
 
   const handleLogSet = async (
     exerciseId: string,
@@ -539,6 +586,21 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
                   />
                   <SetLogger
                     previousSets={loggedSets
+                      .filter(
+                        (s) => s.exercise_id === selectedExercise.exercise_id,
+                      )
+                      .map((s) => ({
+                        set_number: s.set_number,
+                        weight: s.weight,
+                        reps: s.reps,
+                        rir: s.rir,
+                        rpe: s.rpe,
+                        is_myo_rep: s.is_myo_rep,
+                        is_partial: s.is_partial,
+                        myo_rep_count: s.myo_rep_count,
+                        partial_count: s.partial_count,
+                      }))}
+                    lastSets={lastLoggedSets
                       .filter(
                         (s) => s.exercise_id === selectedExercise.exercise_id,
                       )

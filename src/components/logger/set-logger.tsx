@@ -33,6 +33,7 @@ interface Exercise {
 
 interface SetLoggerProps {
   previousSets: LoggedSet[];
+  lastSets?: LoggedSet[];
   defaults?: {
     sets?: number;
     reps?: string;
@@ -46,6 +47,7 @@ interface SetLoggerProps {
 
 export function SetLogger({
   previousSets,
+  lastSets = [],
   defaults,
   exercise,
   onLogSet,
@@ -204,6 +206,49 @@ export function SetLogger({
 
   return (
     <div className="space-y-4">
+      {/* Last Workout Sets */}
+      {lastSets.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground">Last Workout</Label>
+          {isBarbellExercise && (
+            <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+              💡 Weights shown include total weight used (plates on both sides +
+              barbell if applicable)
+            </div>
+          )}
+          <div className="grid grid-cols-4 gap-2 text-sm">
+            {lastSets.map((set, idx) => (
+              <Card key={`last-${idx}`} className="p-2">
+                <div className="text-center">
+                  <div className="font-semibold">Set {set.set_number}</div>
+                  <div className="text-muted-foreground">
+                    {convertWeight(set.weight)}
+                    {weightUnit} × {set.reps}
+                    {typeof set.rir === 'number'
+                      ? ` @${set.rir}RIR`
+                      : typeof set.rpe === 'number'
+                        ? ` @${set.rpe}RPE`
+                        : ''}
+                  </div>
+                  <div className="flex gap-1 justify-center mt-1">
+                    {set.is_myo_rep && (
+                      <Badge variant="secondary" className="text-xs">
+                        Myo
+                      </Badge>
+                    )}
+                    {set.is_partial && (
+                      <Badge variant="secondary" className="text-xs">
+                        Partial
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Previous Sets */}
       {previousSets.length > 0 && (
         <div className="space-y-2">
