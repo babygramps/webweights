@@ -46,6 +46,7 @@ interface ExerciseProgressData {
   rir?: number;
   rpe?: number;
   volume: number;
+  sets?: number;
 }
 
 export function StatsPageClient({

@@ -6,10 +6,12 @@ interface ExerciseProgressData {
   rir?: number;
   rpe?: number;
   volume: number;
+  sets?: number;
 }
 
 export async function fetchExerciseProgressData(
   exerciseId: string,
+  groupBy: 'set' | 'workout' = 'set',
 ): Promise<ExerciseProgressData[]> {
   logger.log(
     `[fetchExerciseProgressData] Starting request for exercise: ${exerciseId}`,
@@ -26,13 +28,19 @@ export async function fetchExerciseProgressData(
     }
 
     logger.log('[fetchExerciseProgressData] Making API request...');
-    const response = await fetch('/api/stats/exercise-progress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const params = new URLSearchParams();
+    if (groupBy === 'workout') params.set('groupBy', 'workout');
+
+    const response = await fetch(
+      `/api/stats/exercise-progress?${params.toString()}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ exerciseId }),
       },
-      body: JSON.stringify({ exerciseId }),
-    });
+    );
 
     logger.log(
       `[fetchExerciseProgressData] API response status: ${response.status}`,

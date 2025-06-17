@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json();
     const { exerciseId } = body;
+    const groupBy = request.nextUrl.searchParams.get('groupBy');
+    const groupByWorkout = groupBy === 'workout';
 
     logger.log('[API] Request body:', { exerciseId });
 
@@ -39,9 +41,24 @@ export async function POST(request: NextRequest) {
     }
 
     logger.log(
-      `[API] Fetching progress for user: ${user.id}, exercise: ${exerciseId}`,
+      `[API] Fetching progress for user: ${user.id}, exercise: ${exerciseId}, groupByWorkout: ${groupByWorkout}`,
     );
-    const progressData = await getExerciseProgress(user.id, exerciseId, 6);
+    type ProgressRow = {
+      date: string | Date;
+      weight: number;
+      reps: number;
+      rir?: number | null;
+      rpe?: number | null;
+      volume: number;
+      sets?: number;
+    };
+
+    const progressData = (await getExerciseProgress(
+      user.id,
+      exerciseId,
+      6,
+      groupByWorkout,
+    )) as ProgressRow[];
 
     logger.log(`[API] Successfully fetched ${progressData.length} data points`);
 
@@ -52,6 +69,7 @@ export async function POST(request: NextRequest) {
       rir: d.rir ? Number(d.rir) : undefined,
       rpe: d.rpe ? Number(d.rpe) : undefined,
       volume: Number(d.volume) || 0,
+      sets: 'sets' in d ? Number((d as { sets?: number }).sets) : undefined,
     }));
 
     logger.log(`[API] Returning processed data with ${result.length} items`);

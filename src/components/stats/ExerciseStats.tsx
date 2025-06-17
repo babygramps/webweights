@@ -1,7 +1,6 @@
 'use client';
-import logger from '@/lib/logger';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -48,36 +47,26 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
   const { weightUnit, convertWeight } = useUserPreferences();
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [progressData, setProgressData] = useState<ExerciseProgressData[]>([]);
+  const [viewMode, setViewMode] = useState<'sets' | 'workouts'>('sets');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleExerciseChange = async (exerciseId: string) => {
+  useEffect(() => {
+    if (!selectedExercise) return;
+
+    setLoading(true);
+    fetchExerciseProgressData(
+      selectedExercise,
+      viewMode === 'workouts' ? 'workout' : 'set',
+    )
+      .then((data) => setProgressData(data || []))
+      .catch(() => setProgressData([]))
+      .finally(() => setLoading(false));
+  }, [viewMode, selectedExercise]);
+
+  const handleExerciseChange = (exerciseId: string) => {
     setSelectedExercise(exerciseId);
     setError(null);
-
-    if (exerciseId) {
-      setLoading(true);
-      try {
-        const data = await fetchExerciseProgressData(exerciseId);
-        setProgressData(data || []);
-      } catch (error) {
-        logger.error('[ExerciseStats] Error loading exercise data:', error);
-        logger.error('[ExerciseStats] Error details:', {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : 'No stack available',
-          exerciseId,
-        });
-
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to load exercise data',
-        );
-        setProgressData([]);
-      } finally {
-        setLoading(false);
-      }
-    }
   };
 
   const selectedExerciseData = exercises.find((e) => e.id === selectedExercise);
@@ -237,7 +226,24 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="progress">
+                <TabsContent value="progress" className="space-y-4">
+                  <div className="flex justify-end">
+                    <Select
+                      value={viewMode}
+                      onValueChange={(v) =>
+                        setViewMode(v as 'sets' | 'workouts')
+                      }
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sets">By Set</SelectItem>
+                        <SelectItem value="workouts">By Workout</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <ExerciseProgressChart
                     exerciseName={selectedExerciseData.name}
                     data={progressData.map((d) => ({

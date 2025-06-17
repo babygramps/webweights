@@ -342,6 +342,7 @@ export async function getExerciseProgress(
   userId: string,
   exerciseId: string,
   months = 3,
+  groupByWorkout = false,
 ) {
   logger.log(
     `[stats] Fetching progress for exercise: ${exerciseId}, user: ${userId}, months: ${months}`,
@@ -350,26 +351,44 @@ export async function getExerciseProgress(
   try {
     const startDate = subMonths(new Date(), months);
 
-    const progress = await db
-      .select({
-        date: setsLogged.loggedAt,
-        weight: setsLogged.weight,
-        reps: setsLogged.reps,
-        rir: setsLogged.rir,
-        rpe: setsLogged.rpe,
-        volume: sql<number>`${setsLogged.weight} * ${setsLogged.reps}`,
-      })
-      .from(setsLogged)
-      .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
-      .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
-      .where(
-        and(
-          eq(mesocycles.userId, userId),
-          eq(setsLogged.exerciseId, exerciseId),
-          gte(setsLogged.loggedAt, startDate),
-        ),
-      )
-      .orderBy(setsLogged.loggedAt);
+    const conditions = and(
+      eq(mesocycles.userId, userId),
+      eq(setsLogged.exerciseId, exerciseId),
+      gte(
+        groupByWorkout ? workouts.scheduledFor : setsLogged.loggedAt,
+        startDate,
+      ),
+    );
+
+    const progress = groupByWorkout
+      ? await db
+          .select({
+            date: workouts.scheduledFor,
+            weight: sql<number>`avg(${setsLogged.weight})`,
+            reps: sql<number>`sum(${setsLogged.reps})`,
+            volume: sql<number>`sum(${setsLogged.weight} * ${setsLogged.reps})`,
+            sets: sql<number>`count(${setsLogged.id})`,
+          })
+          .from(setsLogged)
+          .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+          .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+          .where(conditions)
+          .groupBy(workouts.id)
+          .orderBy(workouts.scheduledFor)
+      : await db
+          .select({
+            date: setsLogged.loggedAt,
+            weight: setsLogged.weight,
+            reps: setsLogged.reps,
+            rir: setsLogged.rir,
+            rpe: setsLogged.rpe,
+            volume: sql<number>`${setsLogged.weight} * ${setsLogged.reps}`,
+          })
+          .from(setsLogged)
+          .innerJoin(workouts, eq(setsLogged.workoutId, workouts.id))
+          .innerJoin(mesocycles, eq(workouts.mesocycleId, mesocycles.id))
+          .where(conditions)
+          .orderBy(setsLogged.loggedAt);
 
     logger.log(`[stats] Found ${progress.length} progress data points`);
     return progress;
