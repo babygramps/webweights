@@ -353,6 +353,8 @@ export async function getExerciseProgress(
     const progress = await db
       .select({
         date: setsLogged.loggedAt,
+        workoutId: setsLogged.workoutId,
+        workoutDate: workouts.scheduledFor,
         weight: setsLogged.weight,
         reps: setsLogged.reps,
         rir: setsLogged.rir,

@@ -1,6 +1,8 @@
 import logger from '@/lib/logger';
 interface ExerciseProgressData {
   date: Date | string;
+  workoutId?: string;
+  workoutDate?: Date | string;
   weight: number;
   reps: number;
   rir?: number;
