@@ -1,7 +1,7 @@
 'use client';
 import logger from '@/lib/logger';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -22,7 +22,13 @@ import { StatsCard } from './StatsCard';
 import { Trophy, TrendingUp, Dumbbell, Calendar } from 'lucide-react';
 import { formatLocalDate } from '@/lib/utils/date';
 import { fetchExerciseProgressData } from '@/lib/utils/stats-api';
+import {
+  aggregateSetsByWorkout,
+  type ExerciseSet,
+} from '@/lib/utils/stats-utils';
 import { useUserPreferences } from '@/lib/contexts/UserPreferencesContext';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface Exercise {
   id: string;
@@ -33,6 +39,8 @@ interface Exercise {
 
 interface ExerciseProgressData {
   date: Date | string;
+  workoutId?: string;
+  workoutDate?: Date | string;
   weight: number;
   reps: number;
   rir?: number;
@@ -48,6 +56,7 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
   const { weightUnit, convertWeight } = useUserPreferences();
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [progressData, setProgressData] = useState<ExerciseProgressData[]>([]);
+  const [groupByWorkout, setGroupByWorkout] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,26 +92,32 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
   const selectedExerciseData = exercises.find((e) => e.id === selectedExercise);
 
   // Calculate stats from progress data with proper unit conversion
+  const processedData = useMemo(() => {
+    const mapped = progressData.map((d) => ({
+      ...d,
+      weight: convertWeight(d.weight),
+      volume: convertWeight(d.volume),
+    })) as (ExerciseSet & ExerciseProgressData)[];
+    return groupByWorkout ? aggregateSetsByWorkout(mapped) : mapped;
+  }, [progressData, convertWeight, groupByWorkout]);
+
   const stats =
-    progressData.length > 0
+    processedData.length > 0
       ? {
-          maxWeight: Math.max(
-            ...progressData.map((d) => convertWeight(d.weight)),
+          maxWeight: Math.max(...processedData.map((d) => d.weight)),
+          maxReps: Math.max(...processedData.map((d) => d.reps)),
+          maxVolume: Math.max(...processedData.map((d) => d.volume)),
+          totalSets: processedData.reduce(
+            (sum, d) => sum + ('sets' in d ? d.sets : 1),
+            0,
           ),
-          maxReps: Math.max(...progressData.map((d) => d.reps)),
-          maxVolume: Math.max(
-            ...progressData.map((d) => convertWeight(d.volume)),
-          ),
-          totalSets: progressData.length,
-          recentWeight: convertWeight(
-            progressData[progressData.length - 1]?.weight || 0,
-          ),
-          recentReps: progressData[progressData.length - 1]?.reps || 0,
-          firstSet: progressData[0]?.date
-            ? new Date(progressData[0].date)
+          recentWeight: processedData[processedData.length - 1]?.weight || 0,
+          recentReps: processedData[processedData.length - 1]?.reps || 0,
+          firstSet: processedData[0]?.date
+            ? new Date(processedData[0].date)
             : null,
-          lastSet: progressData[progressData.length - 1]?.date
-            ? new Date(progressData[progressData.length - 1].date)
+          lastSet: processedData[processedData.length - 1]?.date
+            ? new Date(processedData[processedData.length - 1].date)
             : null,
         }
       : null;
@@ -237,14 +252,20 @@ export function ExerciseStats({ exercises }: ExerciseStatsProps) {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="progress">
+                <TabsContent value="progress" className="space-y-4">
+                  <div className="flex items-center justify-end gap-2">
+                    <Label htmlFor="by-workout" className="mb-0">
+                      By Workout
+                    </Label>
+                    <Switch
+                      id="by-workout"
+                      checked={groupByWorkout}
+                      onCheckedChange={setGroupByWorkout}
+                    />
+                  </div>
                   <ExerciseProgressChart
                     exerciseName={selectedExerciseData.name}
-                    data={progressData.map((d) => ({
-                      ...d,
-                      weight: convertWeight(d.weight),
-                      volume: convertWeight(d.volume),
-                    }))}
+                    data={processedData}
                     showVolume={true}
                     showOneRM={true}
                   />

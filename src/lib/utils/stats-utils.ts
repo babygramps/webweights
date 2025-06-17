@@ -64,3 +64,31 @@ export function calculateSummaryStats(workouts: RecentWorkout[]) {
       : 0;
   return { totalVolume, avgSetsPerWorkout };
 }
+
+export interface ExerciseSet {
+  date: string | Date;
+  weight: number;
+  reps: number;
+  volume: number;
+  workoutId?: string;
+  workoutDate?: string | Date;
+}
+
+export function aggregateSetsByWorkout(data: ExerciseSet[]) {
+  const map = new Map<string, ExerciseSet & { sets: number }>();
+  data.forEach((d) => {
+    const key = d.workoutId ?? String(d.date);
+    const existing = map.get(key);
+    if (existing) {
+      existing.volume += d.volume;
+      existing.weight = Math.max(existing.weight, d.weight);
+      existing.reps = Math.max(existing.reps, d.reps);
+      existing.sets += 1;
+    } else {
+      map.set(key, { ...d, sets: 1, date: d.workoutDate ?? d.date });
+    }
+  });
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+}

@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
 
     const result = progressData.map((d) => ({
       date: d.date || new Date(),
+      workoutId: d.workoutId,
+      workoutDate: d.workoutDate,
       weight: Number(d.weight) || 0,
       reps: Number(d.reps) || 0,
       rir: d.rir ? Number(d.rir) : undefined,
