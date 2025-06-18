@@ -3,7 +3,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 import { Pause, Play, RotateCcw, Bell } from 'lucide-react';
+import {
+  useUserPreferences,
+  type RestTimerNotification,
+} from '@/lib/stores/user-preferences';
 
 const REST_PRESETS = [
   { label: '1 min', seconds: 60 },
@@ -14,6 +25,14 @@ const REST_PRESETS = [
 
 const DEFAULT_PRESET_INDEX = 2; // 2 minutes
 
+const NOTIFICATION_OPTIONS: { label: string; value: RestTimerNotification }[] =
+  [
+    { label: 'Sound & Vibrate', value: 'both' },
+    { label: 'Sound Only', value: 'sound' },
+    { label: 'Vibrate Only', value: 'vibrate' },
+    { label: 'None', value: 'none' },
+  ];
+
 export function RestTimer() {
   const [selectedPresetIndex, setSelectedPresetIndex] =
     useState(DEFAULT_PRESET_INDEX);
@@ -23,6 +42,25 @@ export function RestTimer() {
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [completed, setCompleted] = useState(false);
+  const { restTimerNotification, setRestTimerNotification } =
+    useUserPreferences();
+
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      osc.connect(ctx.destination);
+      osc.start();
+      setTimeout(() => {
+        osc.stop();
+        ctx.close();
+      }, 300);
+    } catch {}
+  };
 
   useEffect(() => {
     if (running && seconds > 0) {
@@ -45,16 +83,23 @@ export function RestTimer() {
     if (seconds === 0 && running) {
       setRunning(false);
       setCompleted(true);
-      // Play sound or vibrate
       if (typeof window !== 'undefined') {
-        if ('vibrate' in navigator) navigator.vibrate(300);
-        try {
-          const audio = new Audio('/media/notify.mp3');
-          audio.play();
-        } catch {}
+        if (
+          (restTimerNotification === 'vibrate' ||
+            restTimerNotification === 'both') &&
+          'vibrate' in navigator
+        ) {
+          navigator.vibrate(300);
+        }
+        if (
+          restTimerNotification === 'sound' ||
+          restTimerNotification === 'both'
+        ) {
+          playBeep();
+        }
       }
     }
-  }, [seconds, running]);
+  }, [seconds, running, restTimerNotification]);
 
   const handlePresetSelect = (index: number) => {
     if (running) return; // Don't allow changing preset while timer is running
@@ -96,6 +141,28 @@ export function RestTimer() {
           </Button>
         ))}
       </div>
+
+      <Select
+        value={restTimerNotification}
+        onValueChange={(val: RestTimerNotification) =>
+          setRestTimerNotification(val)
+        }
+      >
+        <SelectTrigger
+          className="w-40 mb-3"
+          size="sm"
+          aria-label="Notification"
+        >
+          <SelectValue placeholder="Notification" />
+        </SelectTrigger>
+        <SelectContent>
+          {NOTIFICATION_OPTIONS.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Timer Display */}
       <div className="text-3xl font-mono font-bold mb-2">{timeStr}</div>

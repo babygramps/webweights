@@ -11,6 +11,9 @@ class ResizeObserver {
 }
 global.ResizeObserver = ResizeObserver;
 
+// jsdom doesn't implement scrollIntoView
+Element.prototype.scrollIntoView = vi.fn();
+
 // Extend Vitest's expect method with methods from react-testing-library
 expect.extend(matchers);
 
